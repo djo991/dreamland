@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { useDreams } from '../components/DreamContext';
 
 export default function SettingsScreen() {
@@ -33,16 +34,37 @@ export default function SettingsScreen() {
 
   // 1. Export Logic
   const handleExport = async () => {
-    try {
-      const dataStr = JSON.stringify(dreams, null, 2);
-      await Share.share({
-        message: dataStr,
-        title: 'Dream_Journal_Backup.json'
-      });
-    } catch (error) {
-      Alert.alert('Error', 'Could not export data.');
+  try {
+    if (dreams.length === 0) {
+      Alert.alert("No Data", "You have no dreams to export yet.");
+      return;
     }
-  };
+
+    // 1. Create a file path
+    const fileName = `DreamJournal_Backup_${new Date().toISOString().split('T')[0]}.json`;
+    const fileUri = FileSystem.documentDirectory + fileName;
+
+    // 2. Write the JSON string to that file
+    const dataStr = JSON.stringify(dreams, null, 2);
+    await FileSystem.writeAsStringAsync(fileUri, dataStr, {
+      encoding: FileSystem.EncodingType.UTF8
+    });
+
+    // 3. Share the FILE (not just text)
+    // This forces the OS to treat it as a document, enabling "Save to Files"
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'application/json',
+        dialogTitle: 'Save your Backup'
+      });
+    } else {
+      Alert.alert("Error", "Sharing is not available on this device");
+    }
+  } catch (error) {
+    console.error(error);
+    Alert.alert('Error', 'Could not save file.');
+  }
+};
 
   // 2. Import Logic
   const handleImport = async () => {

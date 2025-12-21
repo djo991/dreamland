@@ -48,14 +48,17 @@ export default function Layout() {
 
   return (
     // 5. Wrap everything in a View to attach the onLayout handler
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    // FIX: Added backgroundColor: '#101322' to prevent white flash during navigation
+    <View style={{ flex: 1, backgroundColor: '#101322' }} onLayout={onLayoutRootView}>
       <DreamProvider>
         <Stack 
           screenOptions={{ 
             headerShown: false,
             // Ensure transitions look smooth on dark backgrounds
             contentStyle: { backgroundColor: '#101322' }, 
-            animation: 'slide_from_right'
+            animation: 'slide_from_right',
+            // Ensure headers (if they ever appear) are also dark
+            headerStyle: { backgroundColor: '#101322' }
           }} 
         />
         {/* Global Status Bar Config */}

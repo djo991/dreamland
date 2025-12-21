@@ -30,10 +30,14 @@ export default function StatsScreen() {
   }, [dreams]);
 
   // Reusable Stat Card Component
-  const StatCard = ({ label, value, icon, color, subtext }: any) => (
-    <View className="w-[48%] bg-card-dark p-4 rounded-xl border border-white/5 mb-4">
+  const StatCard = ({ label, value, icon, color, subtext, isCommunityIcon }: any) => (
+    <View className="w-[48%] bg-card-dark p-4 rounded-xl border border-white/5 mb-4 items-center justify-center">
       <View className={`w-10 h-10 rounded-full items-center justify-center mb-3 ${color}`}>
-        <MaterialIcons name={icon} size={20} color="white" />
+        {isCommunityIcon ? (
+           <MaterialCommunityIcons name={icon} size={20} color="white" />
+        ) : (
+           <MaterialIcons name={icon} size={20} color="white" />
+        )}
       </View>
       <Text className="text-3xl font-bold text-white mb-1">{value}</Text>
       <Text className="text-text-secondary text-xs uppercase font-bold tracking-wider">{label}</Text>
@@ -81,8 +85,9 @@ export default function StatsScreen() {
           <StatCard 
             label="Nightmares" 
             value={stats.nightmareCount} 
-            icon="sentiment-very-dissatisfied" 
-            color="bg-red-600" 
+            icon="spider-web"
+            color="bg-red-600"
+            isCommunityIcon={true} 
           />
         </View>
 
