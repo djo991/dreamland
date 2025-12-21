@@ -7,9 +7,10 @@ import { useDreams, Dream } from '../components/DreamContext';
 
 export default function DreamListScreen() {
   const router = useRouter();
-  const { dreams } = useDreams(); // <--- Get real data
+  const { dreams, userProfile } = useDreams(); // <--- Get real data
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  
 
   // FILTER LOGIC
   const filteredDreams = dreams.filter((dream: Dream) => {
@@ -96,19 +97,40 @@ export default function DreamListScreen() {
               {/* FIXED HEADER WITH GRID ICON */}
               <View className="flex-row justify-between items-start pt-2">
                 <View className="flex-1">
-                  <Text className="text-3xl font-bold text-white tracking-tight">Good Morning</Text>
-                  <Text className="text-text-secondary text-base mt-1">
-                    You've recorded <Text className="text-primary font-semibold">{dreams.length} dreams</Text>.
-                  </Text>
-                </View>
-                
-                {/* GALLERY BUTTON */}
-                <TouchableOpacity 
-                  onPress={() => router.push('/gallery')}
-                  className="bg-[#1c1d27] p-2.5 rounded-full border border-white/10 active:bg-white/10 ml-4"
-                >
-                  <MaterialIcons name="grid-view" size={24} color="#9da1b9" />
-                </TouchableOpacity>
+  <Text className="text-3xl font-bold text-white tracking-tight">
+    Good Morning{userProfile?.name ? `, ${userProfile.name}` : ''}
+  </Text>
+  <Text className="text-text-secondary text-base mt-1">
+    You've recorded <Text className="text-primary font-semibold">{dreams.length} dreams</Text>.
+  </Text>
+</View>
+
+
+                <View className="flex-row items-center gap-2">
+  {/* Stats */}
+  <TouchableOpacity 
+    onPress={() => router.push('/stats')}
+    className="bg-[#1c1d27] p-2 rounded-full border border-white/10 active:bg-white/10"
+  >
+    <MaterialIcons name="bar-chart" size={20} color="#9da1b9" />
+  </TouchableOpacity>
+
+  {/* Gallery */}
+  <TouchableOpacity 
+    onPress={() => router.push('/gallery')}
+    className="bg-[#1c1d27] p-2 rounded-full border border-white/10 active:bg-white/10"
+  >
+    <MaterialIcons name="grid-view" size={20} color="#9da1b9" />
+  </TouchableOpacity>
+
+  {/* Settings (NEW) */}
+  <TouchableOpacity 
+    onPress={() => router.push('/settings')}
+    className="bg-[#1c1d27] p-2 rounded-full border border-white/10 active:bg-white/10"
+  >
+    <MaterialIcons name="settings" size={20} color="#9da1b9" />
+  </TouchableOpacity>
+</View>
               </View>
 
               {/* Search Bar */}
