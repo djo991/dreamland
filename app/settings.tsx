@@ -9,7 +9,9 @@ import {
   TextInput, 
   ActivityIndicator, 
   StatusBarStyle,
-  Modal 
+  Modal,
+  Switch,
+  Platform 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,23 +20,28 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTranslation } from 'react-i18next'; // <--- Import
+import { useTranslation } from 'react-i18next';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useDreams } from '../components/DreamContext';
 import { useTheme } from '../components/ThemeContext';
 import { ThemeMode } from '../constants/theme';
+import { NotificationService } from '../services/notificationService';
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Non-binary', 'Prefer not to say', 'Other'];
 
 export default function SettingsScreen() {
   const router = useRouter();
+  
+  // Define Languages
   const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'es', label: 'Español' },
-  { code: 'rs', label: 'Srpski' }, // <--- New language
-];
+    { code: 'en', label: 'English' },
+    { code: 'es', label: 'Español' },
+    { code: 'rs', label: 'Srpski' },
+  ];
+
   const { dreams, userProfile, updateUserProfile, clearAllData, importData } = useDreams();
-  const { t, i18n } = useTranslation(); // <--- Init Translation
+  const { t, i18n } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const { mode, setMode, colors } = useTheme();
 
@@ -42,9 +49,12 @@ export default function SettingsScreen() {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
-  
-  // State for Gender Dropdown
   const [isGenderPickerVisible, setGenderPickerVisible] = useState(false);
+
+  // Notification State
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   // Sync local state with context on mount
   useEffect(() => {
@@ -53,23 +63,54 @@ export default function SettingsScreen() {
       setAge(userProfile.age);
       setGender(userProfile.gender);
     }
+    // Load notification settings
+    NotificationService.getSettings().then(settings => {
+      setReminderEnabled(settings.enabled);
+      if (settings.time) {
+        setReminderTime(new Date(settings.time));
+      }
+    });
   }, [userProfile]);
 
-  // Save when leaving the field (onBlur) or when button pressed
   const handleSaveProfile = () => {
     updateUserProfile({ name, age, gender });
   };
 
-  // Helper to force numbers only for age
   const handleAgeChange = (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, '');
     setAge(numericValue);
   };
 
-  // Change Language Function
   const changeLanguage = async (lang: string) => {
     await AsyncStorage.setItem('user-language', lang);
     i18n.changeLanguage(lang);
+  };
+
+  // Notification Handlers
+  const toggleReminder = async (value: boolean) => {
+    if (value) {
+      const granted = await NotificationService.requestPermissions();
+      if (granted) {
+        await NotificationService.scheduleDailyReminder(reminderTime);
+        setReminderEnabled(true);
+      } else {
+        setReminderEnabled(false);
+      }
+    } else {
+      await NotificationService.cancelReminder();
+      setReminderEnabled(false);
+    }
+  };
+
+  const onTimeChange = async (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') setShowTimePicker(false);
+    
+    if (selectedDate) {
+      setReminderTime(selectedDate);
+      if (reminderEnabled) {
+        await NotificationService.scheduleDailyReminder(selectedDate);
+      }
+    }
   };
 
   const ThemeOption = ({ label, value, icon }: { label: string, value: ThemeMode, icon: any }) => (
@@ -89,27 +130,18 @@ export default function SettingsScreen() {
     </TouchableOpacity>
   );
 
-  // 1. Export Logic
   const handleExport = async () => {
     try {
       if (dreams.length === 0) {
         Alert.alert("No Data", "You have no dreams to export yet.");
         return;
       }
-
       const fileName = `DreamJournal_Backup_${new Date().toISOString().split('T')[0]}.json`;
       const fileUri = FileSystem.documentDirectory + fileName;
-
       const dataStr = JSON.stringify(dreams, null, 2);
-      await FileSystem.writeAsStringAsync(fileUri, dataStr, {
-        encoding: FileSystem.EncodingType.UTF8
-      });
-
+      await FileSystem.writeAsStringAsync(fileUri, dataStr, { encoding: FileSystem.EncodingType.UTF8 });
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'application/json',
-          dialogTitle: 'Save your Backup'
-        });
+        await Sharing.shareAsync(fileUri, { mimeType: 'application/json', dialogTitle: 'Save your Backup' });
       } else {
         Alert.alert("Error", "Sharing is not available on this device");
       }
@@ -119,53 +151,25 @@ export default function SettingsScreen() {
     }
   };
 
-  // 2. Import Logic
   const handleImport = async () => {
     try {
       setIsLoading(true);
-      const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/json',
-        copyToCacheDirectory: true
-      });
-
-      if (result.canceled) {
-        setIsLoading(false);
-        return;
-      }
-
+      const result = await DocumentPicker.getDocumentAsync({ type: 'application/json', copyToCacheDirectory: true });
+      if (result.canceled) { setIsLoading(false); return; }
       const fileUri = result.assets[0].uri;
       const fileContent = await FileSystem.readAsStringAsync(fileUri);
-      
       const success = await importData(fileContent);
-      
-      if (success) {
-        Alert.alert("Success", "Dreams imported successfully!");
-      } else {
-        Alert.alert("Error", "Invalid backup file.");
-      }
-    } catch (e) {
-      Alert.alert("Error", "Failed to read file.");
-    } finally {
-      setIsLoading(false);
-    }
+      if (success) { Alert.alert("Success", "Dreams imported successfully!"); } 
+      else { Alert.alert("Error", "Invalid backup file."); }
+    } catch (e) { Alert.alert("Error", "Failed to read file."); } 
+    finally { setIsLoading(false); }
   };
 
   const handleClear = () => {
-    Alert.alert(
-      "Delete All Data",
-      "This will permanently delete all dreams. Are you sure?",
-      [
+    Alert.alert("Delete All Data", "This will permanently delete all dreams. Are you sure?", [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete Everything", 
-          style: "destructive", 
-          onPress: () => {
-            clearAllData();
-            Alert.alert("Reset Complete", "Your journal has been wiped.");
-          }
-        }
-      ]
-    );
+        { text: "Delete Everything", style: "destructive", onPress: () => { clearAllData(); Alert.alert("Reset Complete", "Your journal has been wiped."); } }
+      ]);
   };
 
   return (
@@ -185,98 +189,110 @@ export default function SettingsScreen() {
         <View className="w-16" />
       </View>
 
-      <ScrollView 
-        className="flex-1"
-        contentContainerStyle={{ padding: 16 }} // Styling preserved from your code
-      >
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
         
         {/* LANGUAGE SECTION */}
-<Text 
-  style={{ color: colors.textSecondary }} 
-  className="text-xs font-bold uppercase tracking-wider mb-2"
->
-  {t('language')}
-</Text>
-<View 
-  className="rounded-xl p-2 border mb-6 flex-row flex-wrap " // Added flex-wrap for safety
-  style={{ backgroundColor: colors.card, borderColor: colors.border }}
->
-  {LANGUAGES.map((lang) => (
-    <TouchableOpacity 
-      key={lang.code}
-      onPress={() => changeLanguage(lang.code)}
-      className={`flex-1 py-2 items-center rounded-lg ${i18n.language === lang.code ? 'bg-primary/20' : ''}`}
-    >
-      <Text 
-        style={{ 
-          color: i18n.language === lang.code ? colors.primary : colors.textSecondary, 
-          fontWeight: 'bold' 
-        }}
-      >
-        {lang.label}
-      </Text>
-    </TouchableOpacity>
-  ))}
-</View>
-        {/* User Profile Section */}
-        <Text 
-          style={{ color: colors.textSecondary }} 
-          className="text-xs font-bold uppercase tracking-wider mb-2"
-        >
-          {t('section_profile')}
+        <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-2">
+          {t('language')}
         </Text>
         <View 
-          className="rounded-xl p-3 border mb-6"
+          className="rounded-xl p-2 border mb-6 flex-row flex-wrap"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
+          {LANGUAGES.map((lang) => (
+            <TouchableOpacity 
+              key={lang.code}
+              onPress={() => changeLanguage(lang.code)}
+              className={`flex-1 py-2 items-center rounded-lg ${i18n.language === lang.code ? 'bg-primary/20' : ''}`}
+              style={{ minWidth: '30%' }}
+            >
+              <Text style={{ color: i18n.language === lang.code ? colors.primary : colors.textSecondary, fontWeight: 'bold' }}>
+                {lang.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* NOTIFICATIONS SECTION */}
+        <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-2">
+          {t('section_notifications')}
+        </Text>
+        <View className="rounded-xl border mb-6 overflow-hidden" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+          <View className="flex-row items-center justify-between p-4 border-b" style={{ borderColor: colors.border }}>
+            <View className="flex-row items-center gap-3">
+              <View className="w-8 h-8 rounded-full bg-primary/20 items-center justify-center">
+                <MaterialIcons name="notifications" size={18} color={colors.primary} />
+              </View>
+              <Text style={{ color: colors.text }} className="font-semibold">{t('reminder_enable')}</Text>
+            </View>
+            <Switch 
+              value={reminderEnabled} 
+              onValueChange={toggleReminder} 
+              trackColor={{ false: colors.input, true: colors.primary }} 
+              thumbColor={'#ffffff'}
+            />
+          </View>
+          
+          {reminderEnabled && (
+            <TouchableOpacity onPress={() => setShowTimePicker(true)} className="flex-row items-center justify-between p-4">
+              <View className="flex-row items-center gap-3">
+                <View className="w-8 h-8" />
+                <Text style={{ color: colors.textSecondary }}>{t('reminder_time')}</Text>
+              </View>
+              <View className="flex-row items-center gap-2">
+                <Text style={{ color: colors.primary, fontWeight: 'bold' }}>
+                  {reminderTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+                <MaterialIcons name="edit" size={16} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+          )}
+          {showTimePicker && (
+            <DateTimePicker
+              value={reminderTime}
+              mode="time"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onTimeChange}
+              textColor={colors.text}
+            />
+          )}
+        </View>
+
+        {/* User Profile Section */}
+        <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-2">
+          {t('section_profile')}
+        </Text>
+        <View className="rounded-xl p-3 border mb-6" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
           <View>
             <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">{t('label_name')}</Text>
             <TextInput 
-              className="px-3 py-3 rounded-lg border mb-2"
-              style={{ 
-                backgroundColor: colors.input, 
-                color: colors.text,
-                borderColor: colors.border
-              }}
-              placeholder={t('placeholder_name')}
-              placeholderTextColor={colors.textSecondary}
-              value={name}
-              onChangeText={setName}
-              onBlur={handleSaveProfile}
+              className="px-3 py-3 rounded-lg border mb-2" 
+              style={{ backgroundColor: colors.input, color: colors.text, borderColor: colors.border }} 
+              placeholder={t('placeholder_name')} 
+              placeholderTextColor={colors.textSecondary} 
+              value={name} 
+              onChangeText={setName} 
+              onBlur={handleSaveProfile} 
             />
           </View>
           <View className="flex-row gap-4">
             <View className="flex-1">
               <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">{t('label_age')}</Text>
               <TextInput 
-                className="px-3 py-3 rounded-lg border"
-                style={{ 
-                  backgroundColor: colors.input, 
-                  color: colors.text,
-                  borderColor: colors.border
-                }}
-                placeholder={t('placeholder_age')}
-                placeholderTextColor={colors.textSecondary}
+                className="px-3 py-3 rounded-lg border" 
+                style={{ backgroundColor: colors.input, color: colors.text, borderColor: colors.border }} 
+                placeholder={t('placeholder_age')} 
+                placeholderTextColor={colors.textSecondary} 
                 keyboardType="number-pad" 
-                value={age}
-                onChangeText={handleAgeChange}
-                onBlur={handleSaveProfile}
+                value={age} 
+                onChangeText={handleAgeChange} 
+                onBlur={handleSaveProfile} 
               />
             </View>
             <View className="flex-1">
               <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">{t('label_gender')}</Text>
-              {/* Gender Dropdown Trigger */}
-              <TouchableOpacity
-                onPress={() => setGenderPickerVisible(true)}
-                className="px-3 py-3 rounded-lg border flex-row justify-between items-center"
-                style={{ 
-                  backgroundColor: colors.input, 
-                  borderColor: colors.border
-                }}
-              >
-                <Text style={{ color: gender ? colors.text : colors.textSecondary }}>
-                  {gender || t('gender_select')}
-                </Text>
+              <TouchableOpacity onPress={() => setGenderPickerVisible(true)} className="px-3 py-3 rounded-lg border flex-row justify-between items-center" style={{ backgroundColor: colors.input, borderColor: colors.border }}>
+                <Text style={{ color: gender ? colors.text : colors.textSecondary }}>{gender || t('gender_select')}</Text>
                 <MaterialIcons name="arrow-drop-down" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
@@ -284,10 +300,7 @@ export default function SettingsScreen() {
         </View>
 
          {/* THEME SECTION */}
-         <Text 
-            style={{ color: colors.textSecondary }} 
-            className="text-xs font-bold uppercase tracking-wider mb-2"
-          >
+         <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-2">
             {t('section_appearance')}
           </Text>
           <View style={{ backgroundColor: colors.card, borderColor: colors.border }} className="rounded-xl p-2 border mb-6">
@@ -298,27 +311,11 @@ export default function SettingsScreen() {
           </View>
 
         {/* Data Management Section */}
-        <Text 
-          style={{ color: colors.textSecondary }} 
-          className="text-xs font-bold uppercase tracking-wider mb-2"
-        >
+        <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-2">
           {t('section_data')}
         </Text>
-        
-        <View 
-          className="rounded-xl overflow-hidden border mb-6"
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        >
-          
-          {/* Export */}
-          <TouchableOpacity 
-            onPress={handleExport}
-            className="flex-row items-center justify-between p-4 border-b"
-            style={{ 
-                backgroundColor: colors.card, 
-                borderColor: colors.border 
-            }}
-          >
+        <View className="rounded-xl overflow-hidden border mb-6" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+          <TouchableOpacity onPress={handleExport} className="flex-row items-center justify-between p-4 border-b" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
             <View className="flex-row items-center gap-3">
               <View className="w-8 h-8 rounded-full bg-blue-500/20 items-center justify-center">
                 <MaterialIcons name="cloud-download" size={18} color="#60a5fa" />
@@ -330,21 +327,10 @@ export default function SettingsScreen() {
             </View>
             <MaterialIcons name="chevron-right" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
-
-          {/* Import */}
-          <TouchableOpacity 
-            onPress={handleImport}
-            disabled={isLoading}
-            className="flex-row items-center justify-between p-4"
-            style={{ backgroundColor: colors.card }}
-          >
+          <TouchableOpacity onPress={handleImport} disabled={isLoading} className="flex-row items-center justify-between p-4" style={{ backgroundColor: colors.card }}>
             <View className="flex-row items-center gap-3">
               <View className="w-8 h-8 rounded-full bg-green-500/20 items-center justify-center">
-                {isLoading ? (
-                   <ActivityIndicator size="small" color="#4ade80" />
-                ) : (
-                   <MaterialIcons name="restore" size={18} color="#4ade80" />
-                )}
+                {isLoading ? (<ActivityIndicator size="small" color="#4ade80" />) : (<MaterialIcons name="restore" size={18} color="#4ade80" />)}
               </View>
               <View>
                 <Text style={{ color: colors.text }} className="font-semibold">{t('btn_restore')}</Text>
@@ -358,10 +344,7 @@ export default function SettingsScreen() {
         {/* Danger Zone */}
         <Text className="text-red-400 text-xs font-bold uppercase tracking-wider mb-2">{t('section_danger')}</Text>
         <View className="bg-red-500/5 rounded-xl overflow-hidden border border-red-500/20">
-          <TouchableOpacity 
-            onPress={handleClear}
-            className="flex-row items-center justify-between p-4 active:bg-red-500/10"
-          >
+          <TouchableOpacity onPress={handleClear} className="flex-row items-center justify-between p-4 active:bg-red-500/10">
             <View className="flex-row items-center gap-3">
               <View className="w-8 h-8 rounded-full bg-red-500/20 items-center justify-center">
                 <MaterialIcons name="delete-forever" size={18} color="#f87171" />
@@ -380,43 +363,22 @@ export default function SettingsScreen() {
 
       </ScrollView>
 
-      {/* Gender Selection Modal */}
-      <Modal
-        visible={isGenderPickerVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setGenderPickerVisible(false)}
-      >
-        <TouchableOpacity 
-          activeOpacity={1} 
-          onPress={() => setGenderPickerVisible(false)}
-          className="flex-1 bg-black/60 justify-center items-center px-6"
-        >
-          <View 
-            className="w-full rounded-xl p-2 border"
-            style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          >
+      {/* Gender Modal */}
+      <Modal visible={isGenderPickerVisible} transparent={true} animationType="fade" onRequestClose={() => setGenderPickerVisible(false)}>
+        <TouchableOpacity activeOpacity={1} onPress={() => setGenderPickerVisible(false)} className="flex-1 bg-black/60 justify-center items-center px-6">
+          <View className="w-full rounded-xl p-2 border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
             <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider p-4">{t('label_gender')}</Text>
             {GENDER_OPTIONS.map((option) => (
               <TouchableOpacity
                 key={option}
-                onPress={() => {
-                  setGender(option);
-                  updateUserProfile({ name, age, gender: option }); // Save immediately
-                  setGenderPickerVisible(false);
-                }}
+                onPress={() => { setGender(option); updateUserProfile({ name, age, gender: option }); setGenderPickerVisible(false); }}
                 className="p-4 border-t"
                 style={{ borderColor: colors.border }}
               >
-                <Text style={{ color: gender === option ? colors.primary : colors.text, fontWeight: gender === option ? 'bold' : 'normal' }}>
-                  {option}
-                </Text>
+                <Text style={{ color: gender === option ? colors.primary : colors.text, fontWeight: gender === option ? 'bold' : 'normal' }}>{option}</Text>
               </TouchableOpacity>
             ))}
-            <TouchableOpacity 
-              onPress={() => setGenderPickerVisible(false)}
-              className="p-4 mt-2 items-center"
-            >
+            <TouchableOpacity onPress={() => setGenderPickerVisible(false)} className="p-4 mt-2 items-center">
               <Text style={{ color: colors.textSecondary }}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>

@@ -60,5 +60,14 @@
   "delete_msg": "Are you sure? This cannot be undone.",
   "delete": "Delete",
   "go_back": "Go Back",
-  "not_found": "Dream not found..."
+  "not_found": "Dream not found...",
+  "onboarding_title": "Welcome Dreamer",
+  "onboarding_sub": "Let's personalize your journal. This helps AI interpret your dreams better.",
+  "btn_start": "Start Journaling",
+  "label_waketime": "Usual Wake Up Time",
+  "section_notifications": "Notifications",
+  "reminder_enable": "Daily Reminder",
+  "reminder_time": "Reminder Time",
+  "perm_denied": "Permission Denied",
+  "perm_msg": "Enable notifications in your system settings."
 }

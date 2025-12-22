@@ -60,5 +60,14 @@
   "delete_msg": "¿Estás seguro? No se puede deshacer.",
   "delete": "Borrar",
   "go_back": "Volver",
-  "not_found": "Sueño no encontrado..."
+  "not_found": "Sueño no encontrado...",
+  "onboarding_title": "Welcome Dreamer",
+  "onboarding_sub": "Let's personalize your journal. This helps AI interpret your dreams better.",
+  "btn_start": "Start Journaling",
+  "label_waketime": "Hora habitual de despertar",
+  "section_notifications": "Notificaciones",
+  "reminder_enable": "Recordatorio diario",
+  "reminder_time": "Hora del aviso",
+  "perm_denied": "Permiso denegado",
+  "perm_msg": "Habilita las notificaciones en la configuración del sistema."
 }

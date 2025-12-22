@@ -60,5 +60,14 @@
   "delete_msg": "Da li ste sigurni? Ovo se ne može poništiti.",
   "delete": "Obriši",
   "go_back": "Idi Nazad",
-  "not_found": "San nije pronađen..."
+  "not_found": "San nije pronađen...",
+  "onboarding_title": "Dobrodošli Sanjaru",
+  "onboarding_sub": "Hajde da personalizujemo tvoj sanovnik. Ovo nam pomaže da bolje tumačimo snove.",
+  "btn_start": "Započni sa popunjavanjem sanovnika",
+  "label_waketime": "Uobičajeno vreme buđenja",
+  "section_notifications": "Obaveštenja",
+  "reminder_enable": "Dnevni podsetnik",
+  "reminder_time": "Vreme podsetnika",
+  "perm_denied": "Dozvola odbijena",
+  "perm_msg": "Omogućite obaveštenja u podešavanjima telefona."
 }
