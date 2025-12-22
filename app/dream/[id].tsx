@@ -13,14 +13,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next'; // <--- Import
+
 import { useDreams, Dream } from '../../components/DreamContext';
-import { useTheme } from '../../components/ThemeContext'; // <--- Import Theme Hook
+import { useTheme } from '../../components/ThemeContext'; 
 
 export default function DreamDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { dreams, deleteDream } = useDreams();
-  const { colors } = useTheme(); // <--- Get Colors
+  const { colors } = useTheme(); 
+  const { t } = useTranslation(); // <--- Init
 
   const [dream, setDream] = useState<Dream | undefined>(undefined);
 
@@ -40,10 +43,10 @@ export default function DreamDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert('Delete Entry', 'Are you sure? This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('delete_title'), t('delete_msg'), [
+      { text: t('cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('delete'),
         style: 'destructive',
         onPress: () => {
           deleteDream(id as string);
@@ -59,9 +62,9 @@ export default function DreamDetailScreen() {
         className="flex-1 items-center justify-center"
         style={{ backgroundColor: colors.background }}
       >
-        <Text style={{ color: colors.textSecondary }}>Dream not found...</Text>
+        <Text style={{ color: colors.textSecondary }}>{t('not_found')}</Text>
         <TouchableOpacity onPress={() => router.back()} className="mt-4">
-          <Text style={{ color: colors.primary }} className="font-bold">Go Back</Text>
+          <Text style={{ color: colors.primary }} className="font-bold">{t('go_back')}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -85,7 +88,6 @@ export default function DreamDetailScreen() {
         <TouchableOpacity 
           onPress={() => router.back()} 
           className="w-10 h-10 -ml-2 items-center justify-center rounded-full"
-          // Using a subtle background for the button hit area
           style={{ backgroundColor: 'transparent' }} 
         >
           <MaterialIcons name="arrow-back" size={24} color={colors.textSecondary} />
@@ -96,7 +98,7 @@ export default function DreamDetailScreen() {
           <TouchableOpacity
             onPress={() => router.push({ pathname: '/editor', params: { id: dream.id } })}
             className="w-10 h-10 rounded-full items-center justify-center"
-            style={{ backgroundColor: colors.input }} // Using input color for button bg
+            style={{ backgroundColor: colors.input }} 
           >
             <MaterialIcons name="edit" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
@@ -113,10 +115,10 @@ export default function DreamDetailScreen() {
 
       <ScrollView className="flex-1">
         <View className="px-6 py-8 flex-col gap-6">
-          <View className="flex-col gap-4">
+          <View className="flex-col gap-1">
             
              {/* Date Section */}
-            <View className="flex-row flex-wrap items-center gap-x-4 gap-y-2">
+            <View className="flex-row flex-wrap items-center gap-y-2">
                <View className="flex-row items-center gap-1.5">
                   <MaterialIcons name="calendar-today" size={14} color={colors.textSecondary} />
                   <Text 
@@ -139,7 +141,7 @@ export default function DreamDetailScreen() {
             <View className="flex-row gap-3">
               {dream.isLucid && (
                 <View 
-                  className="flex-row items-center justify-center gap-2 px-3 h-7 rounded-full shadow-lg"
+                  className="flex-row items-center justify-center px-3 h-7 rounded-full shadow-lg"
                   style={{ 
                     backgroundColor: colors.primary, 
                     shadowColor: colors.primary, 
@@ -153,14 +155,14 @@ export default function DreamDetailScreen() {
                     className="text-white text-xs font-bold uppercase tracking-wider -mt-[2px]"
                     style={{ includeFontPadding: false, textAlignVertical: 'center' }}
                   >
-                    Lucid Dream
+                    {t('filter_lucid')}
                   </Text>
                 </View>
               )}
 
               {dream.isNightmare && (
                 <View 
-                  className="flex-row items-center justify-center gap-2 px-3 h-7 rounded-full border"
+                  className="flex-row items-center justify-center px-3 h-7 rounded-full border"
                   style={{ 
                     backgroundColor: colors.card, 
                     borderColor: colors.border 
@@ -175,7 +177,7 @@ export default function DreamDetailScreen() {
                       textAlignVertical: 'center' 
                     }}
                   >
-                    Nightmare
+                    {t('filter_nightmare')}
                   </Text>
                 </View>
               )}
@@ -186,7 +188,7 @@ export default function DreamDetailScreen() {
 
           <Text 
             className="text-lg leading-relaxed font-normal"
-            style={{ color: colors.text }} // Main text color
+            style={{ color: colors.text }} 
           >
             {dream.body}
           </Text>
@@ -227,7 +229,7 @@ export default function DreamDetailScreen() {
                 className="text-xl font-bold -mt-[1px]"
                 style={{ color: colors.text }}
               >
-                Dream Visuals
+                {t('dream_visuals')}
               </Text>
               <Text 
                 className="text-sm -mt-[1px]"
@@ -258,7 +260,7 @@ export default function DreamDetailScreen() {
                 className="w-[48%] aspect-square rounded-xl border-2 border-dashed flex-col items-center justify-center gap-2"
                 style={{ 
                   borderColor: colors.border,
-                  backgroundColor: colors.input + '40' // 40 = 25% opacity
+                  backgroundColor: colors.input + '40' 
                 }}
               >
                 <View 
@@ -275,7 +277,7 @@ export default function DreamDetailScreen() {
                     textAlignVertical: 'center' 
                   }}
                 >
-                  Upload
+                  {t('upload')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -283,7 +285,7 @@ export default function DreamDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal - Kept dark intentionally for image viewing experience */}
+      {/* Modal */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View className="flex-1 bg-black/95 relative justify-center items-center">
           <TouchableOpacity

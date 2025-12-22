@@ -3,10 +3,11 @@ import { View, Text, TouchableOpacity, Image, FlatList, StatusBar, Modal, Dimens
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useDreams } from '../components/DreamContext';
-import { useTheme } from '../components/ThemeContext'; // <--- Import Theme Hook
+import { useTranslation } from 'react-i18next'; // <--- Import
 
-// Get screen width for grid calculation
+import { useDreams } from '../components/DreamContext';
+import { useTheme } from '../components/ThemeContext'; 
+
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 3;
 const IMAGE_SIZE = width / COLUMN_COUNT;
@@ -14,11 +15,11 @@ const IMAGE_SIZE = width / COLUMN_COUNT;
 export default function GalleryScreen() {
   const router = useRouter();
   const { dreams } = useDreams();
-  const { colors } = useTheme(); // <--- Get Colors
+  const { colors } = useTheme(); 
+  const { t } = useTranslation(); // <--- Init
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<any>(null);
 
-  // Flatten all images from all dreams into one list
   const allImages = useMemo(() => {
     return dreams.flatMap((dream) => {
       if (!dream.images || dream.images.length === 0) return [];
@@ -39,17 +40,13 @@ export default function GalleryScreen() {
     <TouchableOpacity 
       onPress={() => openImage(item)}
       activeOpacity={0.8}
-      style={{ 
-        width: IMAGE_SIZE, 
-        height: IMAGE_SIZE, 
-        borderColor: colors.background // Dynamic grid border
-      }}
+      style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, borderColor: colors.background }}
       className="border p-0.5"
     >
       <Image 
         source={{ uri: item.uri }} 
         className="w-full h-full"
-        style={{ backgroundColor: colors.card }} // Placeholder color
+        style={{ backgroundColor: colors.card }} 
         resizeMode="cover"
       />
     </TouchableOpacity>
@@ -57,34 +54,18 @@ export default function GalleryScreen() {
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
-      <StatusBar 
-        barStyle={colors.statusBarStyle as StatusBarStyle} 
-        backgroundColor={colors.background}
-      />
+      <StatusBar barStyle={colors.statusBarStyle as StatusBarStyle} backgroundColor={colors.background} />
 
       {/* Header */}
       <View 
         className="flex-row items-center justify-between px-4 py-3 border-b"
-        style={{ 
-          backgroundColor: colors.background, 
-          borderColor: colors.border 
-        }}
+        style={{ backgroundColor: colors.background, borderColor: colors.border }}
       >
         <TouchableOpacity onPress={() => router.back()} className="flex-row items-center">
           <MaterialIcons name="arrow-back" size={24} color={colors.textSecondary} />
-          <Text 
-            className="ml-1 font-medium"
-            style={{ color: colors.textSecondary }}
-          >
-            Back
-          </Text>
+          <Text className="ml-1 font-medium" style={{ color: colors.textSecondary }}>{t('back')}</Text>
         </TouchableOpacity>
-        <Text 
-          className="font-bold text-lg"
-          style={{ color: colors.text }}
-        >
-          Dream Gallery
-        </Text>
+        <Text className="font-bold text-lg" style={{ color: colors.text }}>{t('gallery_title')}</Text>
         <View className="w-16" />
       </View>
 
@@ -92,11 +73,8 @@ export default function GalleryScreen() {
       {allImages.length === 0 ? (
         <View className="flex-1 items-center justify-center p-8 opacity-50">
           <MaterialIcons name="collections" size={48} color={colors.textSecondary} />
-          <Text 
-            className="text-base mt-4 text-center"
-            style={{ color: colors.textSecondary }}
-          >
-            No images yet.{'\n'}Add images to your dreams to see them here.
+          <Text className="text-base mt-4 text-center" style={{ color: colors.textSecondary }}>
+            {t('no_images')}{'\n'}{t('no_images_sub')}
           </Text>
         </View>
       ) : (
@@ -110,11 +88,9 @@ export default function GalleryScreen() {
         />
       )}
 
-      {/* Full Screen Viewer Modal */}
-      {/* Kept Dark (bg-black/95) intentionally for better image viewing experience */}
+      {/* Viewer Modal (Dark) */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View className="flex-1 bg-black/95 relative justify-center items-center">
-          
           <TouchableOpacity 
             onPress={() => setModalVisible(false)}
             className="absolute top-12 left-6 z-50 p-2 bg-white/10 rounded-full"
@@ -131,21 +107,16 @@ export default function GalleryScreen() {
               className="absolute top-12 right-6 z-50 px-4 py-2 rounded-full flex-row items-center gap-2"
               style={{ backgroundColor: colors.primary }}
             >
-              <Text className="text-white font-bold text-xs uppercase">View Dream</Text>
+              <Text className="text-white font-bold text-xs uppercase">{t('visual_gallery')}</Text>
               <MaterialIcons name="arrow-forward" size={16} color="white" />
             </TouchableOpacity>
           )}
 
           {selectedImage && (
-            <Image 
-              source={{ uri: selectedImage.uri }} 
-              className="w-full h-3/4" 
-              resizeMode="contain"
-            />
+            <Image source={{ uri: selectedImage.uri }} className="w-full h-3/4" resizeMode="contain" />
           )}
         </View>
       </Modal>
-
     </SafeAreaView>
   );
 }

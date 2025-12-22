@@ -14,14 +14,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next'; // <--- Import
+
 import { useDreams, Dream } from '../components/DreamContext';
 import { DREAM_QUOTES, getGreeting } from '../constants/quotes';
-import { useTheme } from '../components/ThemeContext'; // <--- Import Theme Hook
+import { useTheme } from '../components/ThemeContext'; 
 
 export default function DreamListScreen() {
   const router = useRouter();
   const { dreams, userProfile } = useDreams();
-  const { colors } = useTheme(); // <--- Get Colors
+  const { colors } = useTheme(); 
+  const { t } = useTranslation(); // <--- Init
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -49,7 +52,6 @@ export default function DreamListScreen() {
   const renderDreamItem: ListRenderItem<Dream> = useCallback(({ item }) => (
     <TouchableOpacity
       onPress={() => router.push(`/dream/${item.id}`)}
-      // 1. Refactored Container Colors
       className="group flex-col rounded-xl border mb-6 overflow-hidden active:opacity-90"
       style={{ backgroundColor: colors.card, borderColor: colors.border }}
     >
@@ -59,30 +61,26 @@ export default function DreamListScreen() {
             
             {/* Metadata Row */}
             <View className="flex-row items-center gap-2">
-              {/* Lucid Chip */}
               {item.isLucid && (
                 <View className="flex-row items-center justify-center mb-2 px-2.5 h-6 rounded-md bg-purple-500/10 border border-purple-500/20">
                   <MaterialIcons name="auto-awesome" size={12} color="#c084fc" />
                   <Text
                     className="text-purple-400 text-xs font-bold"
-                    // Layout Fix: Negative Margin
                     style={{ includeFontPadding: false, textAlignVertical: 'center', marginTop: -2 }}
                   >
-                    Lucid
+                    {t('filter_lucid')}
                   </Text>
                 </View>
               )}
 
-              {/* Nightmare Chip */}
               {item.isNightmare && (
                 <View className="flex-row items-center justify-center mb-2 px-2.5 h-6 rounded-md bg-red-500/10 border border-red-500/20">
                   <MaterialCommunityIcons name="spider-web" size={14} color="#f87171" />
                   <Text
                     className="text-red-400 text-xs font-bold"
-                    // Layout Fix: Negative Margin
                     style={{ includeFontPadding: false, textAlignVertical: 'center', marginTop: -2 }}
                   >
-                    Nightmare
+                    {t('filter_nightmare')}
                   </Text>
                 </View>
               )}
@@ -91,7 +89,6 @@ export default function DreamListScreen() {
                 <Text className="text-xs mb-2" style={{ color: colors.textSecondary, opacity: 0.3 }}>•</Text>
               )}
 
-              {/* Date */}
               <Text 
                 className="text-xs font-medium mb-2" 
                 style={{ color: colors.textSecondary, marginTop: -1 }}
@@ -100,7 +97,7 @@ export default function DreamListScreen() {
               </Text>
             </View>
 
-            {/* Title & Body - Refactored Colors */}
+            {/* Title & Body */}
             <Text 
               className="text-lg font-semibold leading-tight"
               style={{ color: colors.text }}
@@ -123,11 +120,10 @@ export default function DreamListScreen() {
                 <View
                   key={`${item.id}:${tag}:${index}`}
                   className="px-2 h-5 justify-center rounded overflow-hidden"
-                  style={{ backgroundColor: colors.input }} // Dynamic Tag Background
+                  style={{ backgroundColor: colors.input }} 
                 >
                   <Text
                     className="text-xs"
-                    // Layout Fix + Dynamic Color
                     style={{ 
                       color: colors.textSecondary,
                       includeFontPadding: false, 
@@ -167,7 +163,7 @@ export default function DreamListScreen() {
         )}
       </View>
     </TouchableOpacity>
-  ), [colors]); // <--- Added colors to dependency array
+  ), [colors, t]);
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -179,6 +175,33 @@ export default function DreamListScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderDreamItem}
           contentContainerStyle={{ paddingBottom: 100 }}
+          
+          // Empty State Component
+          ListEmptyComponent={
+            <View className="items-center justify-center py-12 px-4 opacity-70">
+              <View 
+                className="w-20 h-20 rounded-full items-center justify-center mb-4"
+                style={{ backgroundColor: colors.card }}
+              >
+                <MaterialCommunityIcons name="moon-waning-crescent" size={40} color={colors.primary} />
+              </View>
+              <Text 
+                className="text-lg font-bold mb-2 text-center"
+                style={{ color: colors.text }}
+              >
+                {searchQuery ? t('search_placeholder') : t('empty_title')}
+              </Text>
+              <Text 
+                className="text-center text-sm mb-6 max-w-[250px]"
+                style={{ color: colors.textSecondary }}
+              >
+                {searchQuery 
+                  ? "" 
+                  : t('empty_body')}
+              </Text>
+            </View>
+          }
+
           ListHeaderComponent={
             <View className="flex-col gap-6 mb-6">
               {/* HEADER */}
@@ -194,7 +217,7 @@ export default function DreamListScreen() {
                   <Text className="text-base mt-2" style={{ color: colors.textSecondary }}>
                     <Text style={{ color: colors.primary }} className="font-semibold">
                       {dreams.length}
-                    </Text> dreams recorded.
+                    </Text> {t('dreams_recorded')}
                   </Text>
                 </View>
 
@@ -232,7 +255,7 @@ export default function DreamListScreen() {
                 <View className="flex-row gap-2 mb-1">
                   <MaterialCommunityIcons name="format-quote-open" size={16} color={colors.primary} />
                   <Text style={{ color: colors.primary }} className="text-xs font-bold uppercase tracking-widest">
-                    Daily Wisdom
+                    {t('daily_wisdom')}
                   </Text>
                 </View>
                 <Text 
@@ -251,7 +274,7 @@ export default function DreamListScreen() {
                 <TextInput
                   className="w-full h-12 pl-12 pr-4 rounded-xl text-base"
                   style={{ backgroundColor: colors.input, color: colors.text }}
-                  placeholder="Search dreams..."
+                  placeholder={t('search_placeholder')}
                   placeholderTextColor={colors.textSecondary}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
@@ -259,37 +282,46 @@ export default function DreamListScreen() {
               </View>
 
               {/* Filters */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row pb-2">
-                <FilterChip
-                  label="All Dreams"
-                  icon="view-list"
-                  isActive={activeFilter === 'All'}
-                  onPress={() => setActiveFilter('All')}
-                  colors={colors} // Pass theme colors down
-                />
-                <FilterChip
-                  label="Lucid"
-                  icon="auto-awesome"
-                  isActive={activeFilter === 'Lucid'}
-                  onPress={() => setActiveFilter('Lucid')}
-                  colors={colors}
-                />
-                <FilterChip
-                  label="Nightmare"
-                  icon="spider-web"
-                  isActive={activeFilter === 'Nightmare'}
-                  onPress={() => setActiveFilter('Nightmare')}
-                  isCommunityIcon={true}
-                  colors={colors}
-                />
-                <FilterChip
-                  label="Has Images"
-                  icon="image"
-                  isActive={activeFilter === 'Images'}
-                  onPress={() => setActiveFilter('Images')}
-                  colors={colors}
-                />
-              </ScrollView>
+              {/* Filter Section Title */}
+              <View>
+                <Text 
+                  className="text-xs font-bold uppercase tracking-wider mb-2 ml-1"
+                  style={{ color: colors.textSecondary }}
+                >
+                  {t('filters')}
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row pb-2">
+                  <FilterChip
+                    label={t('filter_all')}
+                    icon="view-list"
+                    isActive={activeFilter === 'All'}
+                    onPress={() => setActiveFilter('All')}
+                    colors={colors}
+                  />
+                  <FilterChip
+                    label={t('filter_lucid')}
+                    icon="auto-awesome"
+                    isActive={activeFilter === 'Lucid'}
+                    onPress={() => setActiveFilter('Lucid')}
+                    colors={colors}
+                  />
+                  <FilterChip
+                    label={t('filter_nightmare')}
+                    icon="spider-web"
+                    isActive={activeFilter === 'Nightmare'}
+                    onPress={() => setActiveFilter('Nightmare')}
+                    isCommunityIcon={true}
+                    colors={colors}
+                  />
+                  <FilterChip
+                    label={t('filter_images')}
+                    icon="image"
+                    isActive={activeFilter === 'Images'}
+                    onPress={() => setActiveFilter('Images')}
+                    colors={colors}
+                  />
+                </ScrollView>
+              </View>
             </View>
           }
         />
@@ -306,7 +338,6 @@ export default function DreamListScreen() {
   );
 }
 
-// FilterChip - Now accepts 'colors' prop
 const FilterChip = ({ label, icon, isActive, onPress, isCommunityIcon, colors }: any) => (
   <TouchableOpacity
     onPress={onPress}

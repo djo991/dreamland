@@ -20,8 +20,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#101322"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "package": "com.appsgalore.dreamland"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,6 +28,14 @@
     "plugins": [
       "expo-router",
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "f5bd8e4d-9c42-4f98-897f-a5c75aa4f956"
+      }
+    }
   }
 }

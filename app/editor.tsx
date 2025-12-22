@@ -4,8 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { useTranslation } from 'react-i18next'; // <--- Import
+
 import { useDreams } from '../components/DreamContext';
-import { useTheme } from '../components/ThemeContext'; // <--- Import Theme Hook
+import { useTheme } from '../components/ThemeContext'; 
 
 interface DreamImage { uri: string; }
 
@@ -13,7 +15,8 @@ export default function EditorScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { addDream, updateDream, dreams } = useDreams();
-  const { colors } = useTheme(); // <--- Get Colors
+  const { colors } = useTheme();
+  const { t } = useTranslation(); // <--- Init
   
   // State
   const [title, setTitle] = useState('');
@@ -116,17 +119,17 @@ export default function EditorScreen() {
       >
         <TouchableOpacity onPress={() => router.back()} className="flex-row items-center">
           <MaterialIcons name="arrow-back" size={24} color={colors.textSecondary} />
-          <Text style={{ color: colors.textSecondary }} className="ml-1 font-medium">Cancel</Text>
+          <Text style={{ color: colors.textSecondary }} className="ml-1 font-medium">{t('cancel')}</Text>
         </TouchableOpacity>
         <Text style={{ color: colors.text }} className="font-bold text-lg hidden sm:block">
-          {isEditing ? 'Edit Dream' : 'New Dream'}
+          {isEditing ? t('editor_edit') : t('editor_new')}
         </Text>
         <TouchableOpacity 
           className="px-4 py-2 rounded-lg shadow-lg"
           style={{ backgroundColor: colors.primary, shadowColor: colors.primary, shadowOpacity: 0.3 }}
           onPress={handleSave}
         >
-          <Text className="text-white font-bold text-sm">Save</Text>
+          <Text className="text-white font-bold text-sm">{t('save')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -139,7 +142,7 @@ export default function EditorScreen() {
           <TextInput
             className="text-2xl font-bold mb-4"
             style={{ color: colors.text }}
-            placeholder="Title..."
+            placeholder={t('placeholder_title')}
             placeholderTextColor={colors.textSecondary}
             value={title}
             onChangeText={setTitle}
@@ -148,7 +151,7 @@ export default function EditorScreen() {
           <TextInput
             className="text-lg leading-relaxed min-h-[150px]"
             style={{ color: colors.text }}
-            placeholder="Describe your dream..."
+            placeholder={t('placeholder_body')}
             placeholderTextColor={colors.textSecondary}
             multiline
             textAlignVertical="top"
@@ -161,7 +164,7 @@ export default function EditorScreen() {
         <View className="mb-6">
           <View className="flex-row justify-between items-center mb-3">
             <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider">
-              Attachments
+              {t('attachments')}
             </Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-3">
@@ -188,7 +191,7 @@ export default function EditorScreen() {
           className="p-4 rounded-xl border mb-4"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
-          <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-3">Mood</Text>
+          <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-3">{t('mood')}</Text>
           <View className="flex-row justify-between p-2 rounded-lg" style={{ backgroundColor: colors.input }}>
             {[1, 2, 3, 4, 5].map((level) => {
               const icons = ['sentiment-very-dissatisfied', 'sentiment-dissatisfied', 'sentiment-neutral', 'sentiment-satisfied', 'sentiment-very-satisfied'];
@@ -222,7 +225,7 @@ export default function EditorScreen() {
               borderColor: isLucid ? colors.primary : colors.border
             }}
           >
-            <Text style={{ color: colors.text }} className="font-semibold">Lucid Dream</Text>
+            <Text style={{ color: colors.text }} className="font-semibold">{t('filter_lucid')}</Text>
             <Switch 
               value={isLucid} 
               onValueChange={setIsLucid} 
@@ -239,7 +242,7 @@ export default function EditorScreen() {
               borderColor: isNightmare ? '#ef4444' : colors.border
             }}
           >
-            <Text style={{ color: colors.text }} className="font-semibold">Nightmare</Text>
+            <Text style={{ color: colors.text }} className="font-semibold">{t('filter_nightmare')}</Text>
             <Switch 
               value={isNightmare} 
               onValueChange={setIsNightmare} 
@@ -254,7 +257,7 @@ export default function EditorScreen() {
           className="p-4 rounded-xl border mb-10"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
-          <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-3">Tags</Text>
+          <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-3">{t('tags')}</Text>
           <View className="flex-row gap-2 mb-3">
             <TextInput 
               className="flex-1 px-3 py-2 rounded-lg border"
@@ -263,7 +266,7 @@ export default function EditorScreen() {
                 color: colors.text,
                 borderColor: colors.border
               }}
-              placeholder="Add a tag..." 
+              placeholder={t('placeholder_tag')} 
               placeholderTextColor={colors.textSecondary}
               value={tagInput} 
               onChangeText={setTagInput} 

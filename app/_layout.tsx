@@ -1,5 +1,6 @@
 import './global.css'; // <--- MUST BE LINE 1
-import 'react-native-reanimated'; // <--- MUST BE LINE 2
+import '../i18n';
+import 'react-native-reanimated'; 
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Stack } from 'expo-router';

@@ -17,6 +17,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next'; // <--- Import
+
 import { useDreams } from '../components/DreamContext';
 import { useTheme } from '../components/ThemeContext';
 import { ThemeMode } from '../constants/theme';
@@ -25,7 +28,13 @@ const GENDER_OPTIONS = ['Male', 'Female', 'Non-binary', 'Prefer not to say', 'Ot
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Español' },
+  { code: 'rs', label: 'Srpski' }, // <--- New language
+];
   const { dreams, userProfile, updateUserProfile, clearAllData, importData } = useDreams();
+  const { t, i18n } = useTranslation(); // <--- Init Translation
   const [isLoading, setIsLoading] = useState(false);
   const { mode, setMode, colors } = useTheme();
 
@@ -55,6 +64,12 @@ export default function SettingsScreen() {
   const handleAgeChange = (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, '');
     setAge(numericValue);
+  };
+
+  // Change Language Function
+  const changeLanguage = async (lang: string) => {
+    await AsyncStorage.setItem('user-language', lang);
+    i18n.changeLanguage(lang);
   };
 
   const ThemeOption = ({ label, value, icon }: { label: string, value: ThemeMode, icon: any }) => (
@@ -164,30 +179,58 @@ export default function SettingsScreen() {
       >
         <TouchableOpacity onPress={() => router.back()} className="flex-row items-center">
           <MaterialIcons name="arrow-back" size={24} color={colors.textSecondary} />
-          <Text style={{ color: colors.textSecondary }} className="ml-1 font-medium">Back</Text>
+          <Text style={{ color: colors.textSecondary }} className="ml-1 font-medium">{t('back')}</Text>
         </TouchableOpacity>
-        <Text style={{ color: colors.text }} className="font-bold text-lg">Settings</Text>
+        <Text style={{ color: colors.text }} className="font-bold text-lg">{t('settings_title')}</Text>
         <View className="w-16" />
       </View>
 
       <ScrollView 
         className="flex-1"
-        contentContainerStyle={{ padding: 16 }} // Fix: Padding applied to content container avoids 'stuck' edges
+        contentContainerStyle={{ padding: 16 }} // Styling preserved from your code
       >
         
+        {/* LANGUAGE SECTION */}
+<Text 
+  style={{ color: colors.textSecondary }} 
+  className="text-xs font-bold uppercase tracking-wider mb-2"
+>
+  {t('language')}
+</Text>
+<View 
+  className="rounded-xl p-2 border mb-6 flex-row flex-wrap " // Added flex-wrap for safety
+  style={{ backgroundColor: colors.card, borderColor: colors.border }}
+>
+  {LANGUAGES.map((lang) => (
+    <TouchableOpacity 
+      key={lang.code}
+      onPress={() => changeLanguage(lang.code)}
+      className={`flex-1 py-2 items-center rounded-lg ${i18n.language === lang.code ? 'bg-primary/20' : ''}`}
+    >
+      <Text 
+        style={{ 
+          color: i18n.language === lang.code ? colors.primary : colors.textSecondary, 
+          fontWeight: 'bold' 
+        }}
+      >
+        {lang.label}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</View>
         {/* User Profile Section */}
         <Text 
           style={{ color: colors.textSecondary }} 
           className="text-xs font-bold uppercase tracking-wider mb-2"
         >
-          My Profile
+          {t('section_profile')}
         </Text>
         <View 
           className="rounded-xl p-3 border mb-6"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           <View>
-            <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">Full Name</Text>
+            <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">{t('label_name')}</Text>
             <TextInput 
               className="px-3 py-3 rounded-lg border mb-2"
               style={{ 
@@ -195,7 +238,7 @@ export default function SettingsScreen() {
                 color: colors.text,
                 borderColor: colors.border
               }}
-              placeholder="e.g. John Doe"
+              placeholder={t('placeholder_name')}
               placeholderTextColor={colors.textSecondary}
               value={name}
               onChangeText={setName}
@@ -204,7 +247,7 @@ export default function SettingsScreen() {
           </View>
           <View className="flex-row gap-4">
             <View className="flex-1">
-              <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">Age</Text>
+              <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">{t('label_age')}</Text>
               <TextInput 
                 className="px-3 py-3 rounded-lg border"
                 style={{ 
@@ -212,7 +255,7 @@ export default function SettingsScreen() {
                   color: colors.text,
                   borderColor: colors.border
                 }}
-                placeholder="Years"
+                placeholder={t('placeholder_age')}
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="number-pad" 
                 value={age}
@@ -221,7 +264,7 @@ export default function SettingsScreen() {
               />
             </View>
             <View className="flex-1">
-              <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">Gender</Text>
+              <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">{t('label_gender')}</Text>
               {/* Gender Dropdown Trigger */}
               <TouchableOpacity
                 onPress={() => setGenderPickerVisible(true)}
@@ -232,7 +275,7 @@ export default function SettingsScreen() {
                 }}
               >
                 <Text style={{ color: gender ? colors.text : colors.textSecondary }}>
-                  {gender || "Select"}
+                  {gender || t('gender_select')}
                 </Text>
                 <MaterialIcons name="arrow-drop-down" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
@@ -245,13 +288,13 @@ export default function SettingsScreen() {
             style={{ color: colors.textSecondary }} 
             className="text-xs font-bold uppercase tracking-wider mb-2"
           >
-            Appearance
+            {t('section_appearance')}
           </Text>
           <View style={{ backgroundColor: colors.card, borderColor: colors.border }} className="rounded-xl p-2 border mb-6">
-            <ThemeOption label="Dynamic (Time based)" value="dynamic" icon="schedule" />
-            <ThemeOption label="Dark Mode" value="dark" icon="dark-mode" />
-            <ThemeOption label="Light Mode" value="light" icon="light-mode" />
-            <ThemeOption label="Sunset Mode" value="sunset" icon="wb-twilight" />
+            <ThemeOption label={t('theme_dynamic')} value="dynamic" icon="schedule" />
+            <ThemeOption label={t('theme_dark')} value="dark" icon="dark-mode" />
+            <ThemeOption label={t('theme_light')} value="light" icon="light-mode" />
+            <ThemeOption label={t('theme_sunset')} value="sunset" icon="wb-twilight" />
           </View>
 
         {/* Data Management Section */}
@@ -259,7 +302,7 @@ export default function SettingsScreen() {
           style={{ color: colors.textSecondary }} 
           className="text-xs font-bold uppercase tracking-wider mb-2"
         >
-          Data Management
+          {t('section_data')}
         </Text>
         
         <View 
@@ -278,11 +321,11 @@ export default function SettingsScreen() {
           >
             <View className="flex-row items-center gap-3">
               <View className="w-8 h-8 rounded-full bg-blue-500/20 items-center justify-center">
-                <MaterialIcons name="file-download" size={18} color="#60a5fa" />
+                <MaterialIcons name="cloud-download" size={18} color="#60a5fa" />
               </View>
               <View>
-                <Text style={{ color: colors.text }} className="font-semibold">Export JSON Backup</Text>
-                <Text style={{ color: colors.textSecondary }} className="text-xs">Save your dreams as text</Text>
+                <Text style={{ color: colors.text }} className="font-semibold">{t('btn_backup')}</Text>
+                <Text style={{ color: colors.textSecondary }} className="text-xs">{t('sub_backup')}</Text>
               </View>
             </View>
             <MaterialIcons name="chevron-right" size={24} color={colors.textSecondary} />
@@ -300,12 +343,12 @@ export default function SettingsScreen() {
                 {isLoading ? (
                    <ActivityIndicator size="small" color="#4ade80" />
                 ) : (
-                   <MaterialIcons name="file-upload" size={18} color="#4ade80" />
+                   <MaterialIcons name="restore" size={18} color="#4ade80" />
                 )}
               </View>
               <View>
-                <Text style={{ color: colors.text }} className="font-semibold">Import Backup</Text>
-                <Text style={{ color: colors.textSecondary }} className="text-xs">Restore from JSON file</Text>
+                <Text style={{ color: colors.text }} className="font-semibold">{t('btn_restore')}</Text>
+                <Text style={{ color: colors.textSecondary }} className="text-xs">{t('sub_restore')}</Text>
               </View>
             </View>
             <MaterialIcons name="chevron-right" size={24} color={colors.textSecondary} />
@@ -313,7 +356,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* Danger Zone */}
-        <Text className="text-red-400 text-xs font-bold uppercase tracking-wider mb-2">Danger Zone</Text>
+        <Text className="text-red-400 text-xs font-bold uppercase tracking-wider mb-2">{t('section_danger')}</Text>
         <View className="bg-red-500/5 rounded-xl overflow-hidden border border-red-500/20">
           <TouchableOpacity 
             onPress={handleClear}
@@ -324,15 +367,15 @@ export default function SettingsScreen() {
                 <MaterialIcons name="delete-forever" size={18} color="#f87171" />
               </View>
               <View>
-                <Text className="text-red-400 font-semibold">Delete All Data</Text>
-                <Text className="text-red-400/60 text-xs">This action cannot be undone</Text>
+                <Text className="text-red-400 font-semibold">{t('btn_delete_all')}</Text>
+                <Text className="text-red-400/60 text-xs">{t('sub_delete_all')}</Text>
               </View>
             </View>
           </TouchableOpacity>
         </View>
 
         <Text style={{ color: colors.textSecondary }} className="text-center text-xs mt-8 pb-8">
-          Dream Journal MVP v1.1.0
+          Dream Journal MVP v1.2.0
         </Text>
 
       </ScrollView>
@@ -353,13 +396,13 @@ export default function SettingsScreen() {
             className="w-full rounded-xl p-2 border"
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
           >
-            <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider p-4">Select Gender</Text>
+            <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider p-4">{t('label_gender')}</Text>
             {GENDER_OPTIONS.map((option) => (
               <TouchableOpacity
                 key={option}
                 onPress={() => {
                   setGender(option);
-                  handleSaveProfile(); 
+                  updateUserProfile({ name, age, gender: option }); // Save immediately
                   setGenderPickerVisible(false);
                 }}
                 className="p-4 border-t"
@@ -374,7 +417,7 @@ export default function SettingsScreen() {
               onPress={() => setGenderPickerVisible(false)}
               className="p-4 mt-2 items-center"
             >
-              <Text style={{ color: colors.textSecondary }}>Cancel</Text>
+              <Text style={{ color: colors.textSecondary }}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
