@@ -6,9 +6,27 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { DreamProvider } from '../components/DreamContext';
+import { ThemeProvider, useTheme } from '../components/ThemeContext';
 
 // 1. Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
+
+function RootLayoutNav() {
+  const { colors } = useTheme();
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Stack 
+        screenOptions={{ 
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background }, 
+          animation: 'slide_from_right',
+          headerStyle: { backgroundColor: colors.background }
+        }} 
+      />
+    </View>
+  );
+}
 
 export default function Layout() {
   const [appIsReady, setAppIsReady] = useState(false);
@@ -47,23 +65,33 @@ export default function Layout() {
   }
 
   return (
-    // 5. Wrap everything in a View to attach the onLayout handler
-    // FIX: Added backgroundColor: '#101322' to prevent white flash during navigation
-    <View style={{ flex: 1, backgroundColor: '#101322' }} onLayout={onLayoutRootView}>
+    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <DreamProvider>
-        <Stack 
-          screenOptions={{ 
-            headerShown: false,
-            // Ensure transitions look smooth on dark backgrounds
-            contentStyle: { backgroundColor: '#101322' }, 
-            animation: 'slide_from_right',
-            // Ensure headers (if they ever appear) are also dark
-            headerStyle: { backgroundColor: '#101322' }
-          }} 
-        />
-        {/* Global Status Bar Config */}
-        <StatusBar style="light" backgroundColor="#101322" />
+        <ThemeProvider> 
+             <RootLayoutNav /> 
+        </ThemeProvider>
       </DreamProvider>
     </View>
   );
+
+//   return (
+//     // 5. Wrap everything in a View to attach the onLayout handler
+//     // FIX: Added backgroundColor: '#101322' to prevent white flash during navigation
+//     <View style={{ flex: 1, backgroundColor: '#101322' }} onLayout={onLayoutRootView}>
+//       <DreamProvider>
+//         <Stack 
+//           screenOptions={{ 
+//             headerShown: false,
+//             // Ensure transitions look smooth on dark backgrounds
+//             contentStyle: { backgroundColor: '#101322' }, 
+//             animation: 'slide_from_right',
+//             // Ensure headers (if they ever appear) are also dark
+//             headerStyle: { backgroundColor: '#101322' }
+//           }} 
+//         />
+//         {/* Global Status Bar Config */}
+//         <StatusBar style="light" backgroundColor="#101322" />
+//       </DreamProvider>
+//     </View>
+//   );
 }

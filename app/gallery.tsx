@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Image, FlatList, StatusBar, Modal, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Image, FlatList, StatusBar, Modal, Dimensions, StatusBarStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useDreams } from '../components/DreamContext'; // <--- Using Real Data
+import { useDreams } from '../components/DreamContext';
+import { useTheme } from '../components/ThemeContext'; // <--- Import Theme Hook
 
 // Get screen width for grid calculation
 const { width } = Dimensions.get('window');
@@ -13,6 +14,7 @@ const IMAGE_SIZE = width / COLUMN_COUNT;
 export default function GalleryScreen() {
   const router = useRouter();
   const { dreams } = useDreams();
+  const { colors } = useTheme(); // <--- Get Colors
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<any>(null);
 
@@ -37,36 +39,63 @@ export default function GalleryScreen() {
     <TouchableOpacity 
       onPress={() => openImage(item)}
       activeOpacity={0.8}
-      style={{ width: IMAGE_SIZE, height: IMAGE_SIZE }}
-      className="border border-background-dark p-0.5"
+      style={{ 
+        width: IMAGE_SIZE, 
+        height: IMAGE_SIZE, 
+        borderColor: colors.background // Dynamic grid border
+      }}
+      className="border p-0.5"
     >
       <Image 
         source={{ uri: item.uri }} 
-        className="w-full h-full bg-[#1c1d27]"
+        className="w-full h-full"
+        style={{ backgroundColor: colors.card }} // Placeholder color
         resizeMode="cover"
       />
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-background-dark">
-      <StatusBar barStyle="light-content" />
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
+      <StatusBar 
+        barStyle={colors.statusBarStyle as StatusBarStyle} 
+        backgroundColor={colors.background}
+      />
 
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 bg-[#111218] border-b border-white/5">
+      <View 
+        className="flex-row items-center justify-between px-4 py-3 border-b"
+        style={{ 
+          backgroundColor: colors.background, 
+          borderColor: colors.border 
+        }}
+      >
         <TouchableOpacity onPress={() => router.back()} className="flex-row items-center">
-          <MaterialIcons name="arrow-back" size={24} color="#9da1b9" />
-          <Text className="text-text-secondary ml-1 font-medium">Back</Text>
+          <MaterialIcons name="arrow-back" size={24} color={colors.textSecondary} />
+          <Text 
+            className="ml-1 font-medium"
+            style={{ color: colors.textSecondary }}
+          >
+            Back
+          </Text>
         </TouchableOpacity>
-        <Text className="text-white font-bold text-lg">Dream Gallery</Text>
+        <Text 
+          className="font-bold text-lg"
+          style={{ color: colors.text }}
+        >
+          Dream Gallery
+        </Text>
         <View className="w-16" />
       </View>
 
       {/* Grid */}
       {allImages.length === 0 ? (
         <View className="flex-1 items-center justify-center p-8 opacity-50">
-          <MaterialIcons name="collections" size={48} color="#9da1b9" />
-          <Text className="text-text-secondary text-base mt-4 text-center">
+          <MaterialIcons name="collections" size={48} color={colors.textSecondary} />
+          <Text 
+            className="text-base mt-4 text-center"
+            style={{ color: colors.textSecondary }}
+          >
             No images yet.{'\n'}Add images to your dreams to see them here.
           </Text>
         </View>
@@ -82,6 +111,7 @@ export default function GalleryScreen() {
       )}
 
       {/* Full Screen Viewer Modal */}
+      {/* Kept Dark (bg-black/95) intentionally for better image viewing experience */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View className="flex-1 bg-black/95 relative justify-center items-center">
           
@@ -98,7 +128,8 @@ export default function GalleryScreen() {
                 setModalVisible(false);
                 router.push(`/dream/${selectedImage.dreamId}`);
               }}
-              className="absolute top-12 right-6 z-50 px-4 py-2 bg-primary rounded-full flex-row items-center gap-2"
+              className="absolute top-12 right-6 z-50 px-4 py-2 rounded-full flex-row items-center gap-2"
+              style={{ backgroundColor: colors.primary }}
             >
               <Text className="text-white font-bold text-xs uppercase">View Dream</Text>
               <MaterialIcons name="arrow-forward" size={16} color="white" />
