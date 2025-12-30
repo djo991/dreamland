@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { initDatabase, getDreams, insertDream, removeDream, updateDreamInDb, clearDatabase } from '../utils/database';
+import { initDatabase, getDreams, insertDream, removeDream, updateDreamInDb, clearDatabase, DreamData } from '../utils/database';
 
 // 1. Types
 export interface Dream {
@@ -16,6 +17,7 @@ export interface Dream {
   imageCount?: number;
   images?: string[];
   mood?: number;
+  interpretation?: string; // New Field
 }
 
 export interface UserProfile {
@@ -26,11 +28,11 @@ export interface UserProfile {
 
 interface DreamContextType {
   dreams: Dream[];
-  userProfile: UserProfile; // <--- NEW
-  updateUserProfile: (profile: UserProfile) => void; // <--- NEW
-  importData: (jsonData: string) => Promise<boolean>; // <--- NEW
-  addDream: (dream: any) => void;
-  updateDream: (dream: any) => void;
+  userProfile: UserProfile;
+  updateUserProfile: (profile: UserProfile) => void;
+  importData: (jsonData: string) => Promise<boolean>;
+  addDream: (dream: Omit<Dream, 'id'> | Dream) => void;
+  updateDream: (dream: Dream) => void;
   deleteDream: (id: string) => void;
   clearAllData: () => void;
 }
@@ -39,8 +41,9 @@ const DreamContext = createContext<DreamContextType | undefined>(undefined);
 
 export function DreamProvider({ children }: { children: React.ReactNode }) {
   const [dreams, setDreams] = useState<Dream[]>([]);
-  
-  // New User Profile State
+  const [error, setError] = useState<string | null>(null);
+
+  // User Profile State
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: '',
     gender: '',
@@ -52,9 +55,10 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
     try {
       initDatabase();
       loadDreams();
-      loadUserProfile(); // <--- Load Profile
+      loadUserProfile();
     } catch (e) {
       console.error("Initialization Error:", e);
+      setError("Failed to initialize database. Please restart the app.");
     }
   }, []);
 
@@ -81,10 +85,11 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
   const loadDreams = () => {
     try {
       const rawDreams = getDreams();
-      const formattedDreams: Dream[] = rawDreams.map((row: any) => {
+      // Explicitly map DB types (numbers/strings) to UI types (booleans/dates)
+      const formattedDreams: Dream[] = rawDreams.map((row: DreamData) => {
         const parsedImages = JSON.parse(row.images || '[]');
         return {
-          id: row.id.toString(),
+          id: row.id!.toString(), // ID is guaranteed from DB fetch
           title: row.title,
           body: row.body,
           date: row.date,
@@ -96,15 +101,18 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
           hasImages: parsedImages.length > 0,
           imageCount: parsedImages.length,
           thumbnail: parsedImages.length > 0 ? parsedImages[0] : undefined,
+          interpretation: row.interpretation || undefined,
         };
       });
       setDreams(formattedDreams);
+      setError(null); // Clear error on success
     } catch (e) {
       console.error("Failed to load dreams:", e);
+      setError("Failed to load your dreams.");
     }
   };
 
-  // NEW: Import Data Function
+  // Import Data Function
   const importData = async (jsonData: string): Promise<boolean> => {
     try {
       const parsed = JSON.parse(jsonData);
@@ -112,8 +120,7 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
 
       // Loop through and insert each dream
       parsed.forEach((d: any) => {
-        // Basic validation
-        if (!d.title) return; 
+        if (!d.title) return;
 
         insertDream({
           title: d.title,
@@ -123,7 +130,8 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
           isLucid: d.isLucid ? 1 : 0,
           isNightmare: d.isNightmare ? 1 : 0,
           tags: JSON.stringify(d.tags || []),
-          images: JSON.stringify(d.images || [])
+          images: JSON.stringify(d.images || []),
+          interpretation: d.interpretation || ''
         });
       });
 
@@ -135,33 +143,45 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addDream = (newDream: any) => {
-    insertDream({
-      title: newDream.title,
-      body: newDream.body,
-      date: newDream.date,
-      mood: newDream.mood,
-      isLucid: newDream.isLucid ? 1 : 0,
-      isNightmare: newDream.isNightmare ? 1 : 0,
-      tags: JSON.stringify(newDream.tags),
-      images: JSON.stringify(newDream.images)
-    });
-    loadDreams();
+  const addDream = (newDream: Omit<Dream, 'id'>) => {
+    try {
+      insertDream({
+        title: newDream.title,
+        body: newDream.body,
+        date: newDream.date,
+        mood: newDream.mood || 0,
+        isLucid: newDream.isLucid ? 1 : 0,
+        isNightmare: newDream.isNightmare ? 1 : 0,
+        tags: JSON.stringify(newDream.tags),
+        images: JSON.stringify(newDream.images),
+        interpretation: newDream.interpretation || ''
+      });
+      loadDreams();
+    } catch (e) {
+      console.error("Failed to add dream:", e);
+      setError("Failed to save dream.");
+    }
   };
 
-  const updateDream = (updatedDream: any) => {
-    updateDreamInDb({
-      id: parseInt(updatedDream.id),
-      title: updatedDream.title,
-      body: updatedDream.body,
-      date: updatedDream.date,
-      mood: updatedDream.mood,
-      isLucid: updatedDream.isLucid ? 1 : 0,
-      isNightmare: updatedDream.isNightmare ? 1 : 0,
-      tags: JSON.stringify(updatedDream.tags),
-      images: JSON.stringify(updatedDream.images)
-    });
-    loadDreams();
+  const updateDream = (updatedDream: Dream) => {
+    try {
+      updateDreamInDb({
+        id: parseInt(updatedDream.id),
+        title: updatedDream.title,
+        body: updatedDream.body,
+        date: updatedDream.date,
+        mood: updatedDream.mood || 0,
+        isLucid: updatedDream.isLucid ? 1 : 0,
+        isNightmare: updatedDream.isNightmare ? 1 : 0,
+        tags: JSON.stringify(updatedDream.tags),
+        images: JSON.stringify(updatedDream.images),
+        interpretation: updatedDream.interpretation || ''
+      });
+      loadDreams();
+    } catch (e) {
+      console.error("Failed to update dream:", e);
+      setError("Failed to update dream.");
+    }
   };
 
   const deleteDream = (id: string) => {
@@ -177,6 +197,15 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
   return (
     <DreamContext.Provider value={{ dreams, userProfile, updateUserProfile, importData, addDream, deleteDream, updateDream, clearAllData }}>
       {children}
+      {error && (
+        <View style={{ position: 'absolute', bottom: 20, left: 20, right: 20, backgroundColor: '#ef4444', padding: 16, borderRadius: 8, elevation: 5 }}>
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Error</Text>
+          <Text style={{ color: 'white' }}>{error}</Text>
+          <TouchableOpacity onPress={() => setError(null)} style={{ marginTop: 8 }}>
+            <Text style={{ color: 'white', textDecorationLine: 'underline' }}>Dismiss</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </DreamContext.Provider>
   );
 }

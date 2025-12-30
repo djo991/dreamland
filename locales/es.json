@@ -1,5 +1,7 @@
 {
-  "greeting": "Buenos Días",
+  "greeting_morning": "Buenos Días",
+  "greeting_afternoon": "Buenas Tardes",
+  "greeting_evening": "Buenas Noches",
   "dreams_recorded": "sueños guardados.",
   "daily_wisdom": "Sabiduría Diaria",
   "search_placeholder": "Buscar sueños...",
@@ -69,5 +71,18 @@
   "reminder_enable": "Recordatorio diario",
   "reminder_time": "Hora del aviso",
   "perm_denied": "Permiso denegado",
-  "perm_msg": "Habilita las notificaciones en la configuración del sistema."
+  "perm_msg": "Habilita las notificaciones en la configuración del sistema.",
+  "share_dream": "Compartir Sueño",
+  "share_mode_text": "Texto",
+  "share_mode_image": "Imagen",
+  "share_include_tags": "Incluir Etiquetas",
+  "share_bg": "Fondo",
+  "share_btn": "Compartir Ahora",
+  "share_preparing": "Preparando...",
+  "style_label": "Estilo de Interpretación",
+  "style_psychologist": "El Psicólogo",
+  "style_freud": "Freud",
+  "style_mystic": "El Místico",
+  "style_bestie": "Mejor Amiga (Sassy)",
+  "btn_interpret": "Analyze Dream"
 }

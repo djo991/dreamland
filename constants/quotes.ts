@@ -6,12 +6,65 @@ export const DREAM_QUOTES = [
   "Throw your dreams into space like a kite, and you do not know what it will bring back, a new life, a new friend, a new love, a new country. — Anaïs Nin",
   "Sleep is the best meditation. — Dalai Lama",
   "Man is a genius when he is dreaming. — Akira Kurosawa",
-  "Dreams are renewable. No matter what our age or condition, there are still untapped possibilities within us and new beauty waiting to be born. — Dale E. Turner"
+  "Dreams are renewable. No matter what our age or condition, there are still untapped possibilities within us and new beauty waiting to be born. — Dale E. Turner",
+  "All that we see or seem is but a dream within a dream. — Edgar Allan Poe",
+  "You may say I'm a dreamer, but I'm not the only one. — John Lennon",
+  "Dreams are today's answers to tomorrow's questions. — Edgar Cayce",
+  "If you can dream it, you can do it. — Walt Disney",
+  "Hold fast to dreams, for if dreams die, life is a broken-winged bird that cannot fly. — Langston Hughes",
+  "The only thing that will stop you from fulfilling your dreams is you. — Tom Bradley",
+  "Reality is wrong. Dreams are for real. — Tupac Shakur",
+  "Dreams don't work unless you do. — John C. Maxwell",
+  "A dreamer is one who can only find his way by moonlight, and his punishment is that he sees the dawn before the rest of the world. — Oscar Wilde",
+  "Go confidently in the direction of your dreams. Live the life you have imagined. — Henry David Thoreau",
+  "It does not do to dwell on dreams and forget to live. — J.K. Rowling",
+  "We are such stuff as dreams are made on, and our little life is rounded with a sleep. — William Shakespeare",
+  "The biggest adventure you can take is to live the life of your dreams. — Oprah Winfrey",
+  "Every great dream begins with a dreamer. Always remember, you have within you the strength, the patience, and the passion to reach for the stars to change the world. — Harriet Tubman",
+  "Dreams are necessary to life. — Anaïs Nin",
+  "Without leaps of imagination, or dreaming, we lose the excitement of possibilities. Dreaming, after all, is a form of planning. — Gloria Steinem",
+  "Deep into that darkness peering, long I stood there, wondering, fearing, doubting, dreaming dreams no mortal ever dared to dream before. — Edgar Allan Poe",
+  "Dare to live the life you have dreamed for yourself. Go forward and make your dreams come true. — Ralph Waldo Emerson",
+  "Never give up on a dream just because of the time it will take to accomplish it. The time will pass anyway. — Earl Nightingale",
+  "So many of our dreams at first seem impossible, then they seem improbable, and then, when we summon the will, they soon become inevitable. — Christopher Reeve",
+  "To accomplish great things, we must not only act, but also dream; not only plan, but also believe. — Anatole France",
+  "Dreaming, after all, is a form of planning. — Gloria Steinem",
+  "No matter where you're from, your dreams are valid. — Lupita Nyong'o",
+  "Dreams are the seedlings of reality. — James Allen",
+  "A dream doesn't become reality through magic; it takes sweat, determination and hard work. — Colin Powell",
+  "There is only one thing that makes a dream impossible to achieve: the fear of failure. — Paulo Coelho",
+  "Don't let someone else's opinion of you become your reality. — Les Brown",
+  "Your time is limited, so don't waste it living someone else's life. — Steve Jobs",
+  "If your dreams don't scare you, they are too small. — Richard Branson",
+  "Follow your dreams, they know the way. — Kobe Yamada",
+  "Dreams consist of memories, but they also consist of hopes. — Stephen King",
+  "A man is not old until regrets take the place of dreams. — John Barrymore",
+  "Hope is a waking dream. — Aristotle",
+  "I dream my painting and I paint my dream. — Vincent van Gogh",
+  "The interpretation of dreams is the royal road to a knowledge of the unconscious activities of the mind. — Sigmund Freud",
+  "Dreaming permits each and every one of us to be quietly and safely insane every night of our lives. — William Dement",
+  "Dreams are the language of God. — Paulo Coelho",
+  "The best way to make your dreams come true is to wake up. — Paul Valéry",
+  "Life is a dream for the wise, a game for the fool, a comedy for the rich, a tragedy for the poor. — Sholom Aleichem",
+  "Those who dream by day are cognizant of many things which escape those who dream only by night. — Edgar Allan Poe",
+  "Dreams are often most profound when they seem the most crazy. — Sigmund Freud",
+  "Whatever you can do, or dream you can, begin it. Boldness has genius, power and magic in it. — Johann Wolfgang von Goethe",
+  "It is never too late to be what you might have been. — George Eliot",
+  "Only in our dreams are we free. The rest of the time we need wages. — Terry Pratchett",
+  "Dreams feel real while we're in them. It's only when we wake up that we realize something was actually strange. — Inception",
+  "Do not spoil what you have by desiring what you have not; remember that what you now have was once among the things you only hoped for. — Epicurus",
+  "Focus on your goal. Don't look in any direction but ahead. — Unknown",
+  "Believe you can and you're halfway there. — Theodore Roosevelt",
+  "Everything you've ever wanted is on the other side of fear. — George Addair",
+  "We dream to give ourselves hope. To stop dreaming – well, that’s like saying you can never change your fate. — Amy Tan",
+  "Sometimes the dreams that come true are the dreams you never even knew you had. — Alice Sebold",
+  "Let your dreams remain big and your worries stay small. — Rascal Flatts",
+  "You are never too old to set another goal or to dream a new dream. — C.S. Lewis"
 ];
 
 export const getGreeting = () => {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good Morning";
-  if (hour < 18) return "Good Afternoon";
-  return "Good Evening";
+  if (hour < 12) return "greeting_morning";
+  if (hour < 18) return "greeting_afternoon";
+  return "greeting_evening";
 };

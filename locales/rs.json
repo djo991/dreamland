@@ -1,5 +1,7 @@
 {
-  "greeting": "Dobro jutro",
+  "greeting_morning": "Dobro jutro",
+  "greeting_afternoon": "Dobar dan",
+  "greeting_evening": "Dobro veče",
   "dreams_recorded": "snova zabeleženo.",
   "daily_wisdom": "Mudrost dana",
   "search_placeholder": "Pretraži snove...",
@@ -69,5 +71,18 @@
   "reminder_enable": "Dnevni podsetnik",
   "reminder_time": "Vreme podsetnika",
   "perm_denied": "Dozvola odbijena",
-  "perm_msg": "Omogućite obaveštenja u podešavanjima telefona."
+  "perm_msg": "Omogućite obaveštenja u podešavanjima telefona.",
+  "share_dream": "Podeli San",
+  "share_mode_text": "Tekst",
+  "share_mode_image": "Slika",
+  "share_include_tags": "Uključi tagove",
+  "share_bg": "Pozadina",
+  "share_btn": "Podeli odmah",
+  "share_preparing": "Priprema...",
+  "style_label": "Stil Tumačenja",
+  "style_psychologist": "Psiholog",
+  "style_freud": "Frojd",
+  "style_mystic": "Mistik",
+  "style_bestie": "Najbolja drugarica",
+  "btn_interpret": "Analiziraj san"
 }

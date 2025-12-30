@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  ScrollView, 
-  StatusBar, 
-  Alert, 
-  TextInput, 
-  ActivityIndicator, 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StatusBar,
+  Alert,
+  TextInput,
+  ActivityIndicator,
   StatusBarStyle,
   Modal,
   Switch,
-  Platform 
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -28,11 +28,18 @@ import { useTheme } from '../components/ThemeContext';
 import { ThemeMode } from '../constants/theme';
 import { NotificationService } from '../services/notificationService';
 
-const GENDER_OPTIONS = ['Male', 'Female', 'Non-binary', 'Prefer not to say', 'Other'];
+const GENDER_KEYS: Record<string, string> = {
+  'Male': 'gender_male',
+  'Female': 'gender_female',
+  'Non-binary': 'gender_non_binary',
+  'Prefer not to say': 'gender_prefer_not_to_say',
+  'Other': 'gender_other'
+};
+const GENDER_OPTIONS = Object.keys(GENDER_KEYS);
 
 export default function SettingsScreen() {
   const router = useRouter();
-  
+
   // Define Languages
   const LANGUAGES = [
     { code: 'en', label: 'English' },
@@ -104,7 +111,7 @@ export default function SettingsScreen() {
 
   const onTimeChange = async (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') setShowTimePicker(false);
-    
+
     if (selectedDate) {
       setReminderTime(selectedDate);
       if (reminderEnabled) {
@@ -114,10 +121,10 @@ export default function SettingsScreen() {
   };
 
   const ThemeOption = ({ label, value, icon }: { label: string, value: ThemeMode, icon: any }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       onPress={() => setMode(value)}
-      style={{ 
-        backgroundColor: mode === value ? colors.primary + '20' : 'transparent', 
+      style={{
+        backgroundColor: mode === value ? colors.primary + '20' : 'transparent',
         borderColor: mode === value ? colors.primary : 'transparent'
       }}
       className="flex-row items-center justify-between p-3 rounded-lg border mb-1"
@@ -133,7 +140,7 @@ export default function SettingsScreen() {
   const handleExport = async () => {
     try {
       if (dreams.length === 0) {
-        Alert.alert("No Data", "You have no dreams to export yet.");
+        Alert.alert(t('alert_no_data'), t('alert_no_dreams_export'));
         return;
       }
       const fileName = `DreamJournal_Backup_${new Date().toISOString().split('T')[0]}.json`;
@@ -143,11 +150,11 @@ export default function SettingsScreen() {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri, { mimeType: 'application/json', dialogTitle: 'Save your Backup' });
       } else {
-        Alert.alert("Error", "Sharing is not available on this device");
+        Alert.alert(t('alert_error'), t('alert_share_not_available'));
       }
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Could not save file.');
+      Alert.alert(t('alert_error'), t('alert_save_failed'));
     }
   };
 
@@ -159,17 +166,17 @@ export default function SettingsScreen() {
       const fileUri = result.assets[0].uri;
       const fileContent = await FileSystem.readAsStringAsync(fileUri);
       const success = await importData(fileContent);
-      if (success) { Alert.alert("Success", "Dreams imported successfully!"); } 
-      else { Alert.alert("Error", "Invalid backup file."); }
-    } catch (e) { Alert.alert("Error", "Failed to read file."); } 
+      if (success) { Alert.alert(t('alert_success'), t('alert_imported')); }
+      else { Alert.alert(t('alert_error'), t('alert_invalid_backup')); }
+    } catch (e) { Alert.alert(t('alert_error'), t('alert_read_failed')); }
     finally { setIsLoading(false); }
   };
 
   const handleClear = () => {
-    Alert.alert("Delete All Data", "This will permanently delete all dreams. Are you sure?", [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete Everything", style: "destructive", onPress: () => { clearAllData(); Alert.alert("Reset Complete", "Your journal has been wiped."); } }
-      ]);
+    Alert.alert(t('btn_delete_all'), t('delete_msg'), [
+      { text: t('cancel'), style: "cancel" },
+      { text: t('btn_delete_all'), style: "destructive", onPress: () => { clearAllData(); Alert.alert(t('alert_reset_complete'), t('alert_wiped')); } }
+    ]);
   };
 
   return (
@@ -177,7 +184,7 @@ export default function SettingsScreen() {
       <StatusBar barStyle={colors.statusBarStyle as StatusBarStyle} backgroundColor={colors.background} />
 
       {/* Header */}
-      <View 
+      <View
         className="flex-row items-center justify-between px-4 py-3 border-b"
         style={{ backgroundColor: colors.background, borderColor: colors.border }}
       >
@@ -190,17 +197,17 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
-        
+
         {/* LANGUAGE SECTION */}
         <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-2">
           {t('language')}
         </Text>
-        <View 
+        <View
           className="rounded-xl p-2 border mb-6 flex-row flex-wrap"
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
         >
           {LANGUAGES.map((lang) => (
-            <TouchableOpacity 
+            <TouchableOpacity
               key={lang.code}
               onPress={() => changeLanguage(lang.code)}
               className={`flex-1 py-2 items-center rounded-lg ${i18n.language === lang.code ? 'bg-primary/20' : ''}`}
@@ -225,14 +232,14 @@ export default function SettingsScreen() {
               </View>
               <Text style={{ color: colors.text }} className="font-semibold">{t('reminder_enable')}</Text>
             </View>
-            <Switch 
-              value={reminderEnabled} 
-              onValueChange={toggleReminder} 
-              trackColor={{ false: colors.input, true: colors.primary }} 
+            <Switch
+              value={reminderEnabled}
+              onValueChange={toggleReminder}
+              trackColor={{ false: colors.input, true: colors.primary }}
               thumbColor={'#ffffff'}
             />
           </View>
-          
+
           {reminderEnabled && (
             <TouchableOpacity onPress={() => setShowTimePicker(true)} className="flex-row items-center justify-between p-4">
               <View className="flex-row items-center gap-3">
@@ -265,50 +272,50 @@ export default function SettingsScreen() {
         <View className="rounded-xl p-3 border mb-6" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
           <View>
             <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">{t('label_name')}</Text>
-            <TextInput 
-              className="px-3 py-3 rounded-lg border mb-2" 
-              style={{ backgroundColor: colors.input, color: colors.text, borderColor: colors.border }} 
-              placeholder={t('placeholder_name')} 
-              placeholderTextColor={colors.textSecondary} 
-              value={name} 
-              onChangeText={setName} 
-              onBlur={handleSaveProfile} 
+            <TextInput
+              className="px-3 py-3 rounded-lg border mb-2"
+              style={{ backgroundColor: colors.input, color: colors.text, borderColor: colors.border }}
+              placeholder={t('placeholder_name')}
+              placeholderTextColor={colors.textSecondary}
+              value={name}
+              onChangeText={setName}
+              onBlur={handleSaveProfile}
             />
           </View>
           <View className="flex-row gap-4">
             <View className="flex-1">
               <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">{t('label_age')}</Text>
-              <TextInput 
-                className="px-3 py-3 rounded-lg border" 
-                style={{ backgroundColor: colors.input, color: colors.text, borderColor: colors.border }} 
-                placeholder={t('placeholder_age')} 
-                placeholderTextColor={colors.textSecondary} 
-                keyboardType="number-pad" 
-                value={age} 
-                onChangeText={handleAgeChange} 
-                onBlur={handleSaveProfile} 
+              <TextInput
+                className="px-3 py-3 rounded-lg border"
+                style={{ backgroundColor: colors.input, color: colors.text, borderColor: colors.border }}
+                placeholder={t('placeholder_age')}
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+                value={age}
+                onChangeText={handleAgeChange}
+                onBlur={handleSaveProfile}
               />
             </View>
             <View className="flex-1">
               <Text style={{ color: colors.textSecondary }} className="text-xs mb-1">{t('label_gender')}</Text>
               <TouchableOpacity onPress={() => setGenderPickerVisible(true)} className="px-3 py-3 rounded-lg border flex-row justify-between items-center" style={{ backgroundColor: colors.input, borderColor: colors.border }}>
-                <Text style={{ color: gender ? colors.text : colors.textSecondary }}>{gender || t('gender_select')}</Text>
+                <Text style={{ color: gender ? colors.text : colors.textSecondary }}>{gender ? t(GENDER_KEYS[gender] || 'gender_other') : t('gender_select')}</Text>
                 <MaterialIcons name="arrow-drop-down" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-         {/* THEME SECTION */}
-         <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-2">
-            {t('section_appearance')}
-          </Text>
-          <View style={{ backgroundColor: colors.card, borderColor: colors.border }} className="rounded-xl p-2 border mb-6">
-            <ThemeOption label={t('theme_dynamic')} value="dynamic" icon="schedule" />
-            <ThemeOption label={t('theme_dark')} value="dark" icon="dark-mode" />
-            <ThemeOption label={t('theme_light')} value="light" icon="light-mode" />
-            <ThemeOption label={t('theme_sunset')} value="sunset" icon="wb-twilight" />
-          </View>
+        {/* THEME SECTION */}
+        <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-2">
+          {t('section_appearance')}
+        </Text>
+        <View style={{ backgroundColor: colors.card, borderColor: colors.border }} className="rounded-xl p-2 border mb-6">
+          <ThemeOption label={t('theme_dynamic')} value="dynamic" icon="schedule" />
+          <ThemeOption label={t('theme_dark')} value="dark" icon="dark-mode" />
+          <ThemeOption label={t('theme_light')} value="light" icon="light-mode" />
+          <ThemeOption label={t('theme_sunset')} value="sunset" icon="wb-twilight" />
+        </View>
 
         {/* Data Management Section */}
         <Text style={{ color: colors.textSecondary }} className="text-xs font-bold uppercase tracking-wider mb-2">
@@ -358,7 +365,7 @@ export default function SettingsScreen() {
         </View>
 
         <Text style={{ color: colors.textSecondary }} className="text-center text-xs mt-8 pb-8">
-          Dream Journal MVP v1.2.0
+          {t('footer_version')}
         </Text>
 
       </ScrollView>
@@ -375,7 +382,7 @@ export default function SettingsScreen() {
                 className="p-4 border-t"
                 style={{ borderColor: colors.border }}
               >
-                <Text style={{ color: gender === option ? colors.primary : colors.text, fontWeight: gender === option ? 'bold' : 'normal' }}>{option}</Text>
+                <Text style={{ color: gender === option ? colors.primary : colors.text, fontWeight: gender === option ? 'bold' : 'normal' }}>{t(GENDER_KEYS[option] || 'gender_other')}</Text>
               </TouchableOpacity>
             ))}
             <TouchableOpacity onPress={() => setGenderPickerVisible(false)} className="p-4 mt-2 items-center">

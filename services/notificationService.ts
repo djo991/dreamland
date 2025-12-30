@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from '../i18n';
 
 // 1. Configure how notifications appear when the app is open
 Notifications.setNotificationHandler({
@@ -14,19 +15,19 @@ Notifications.setNotificationHandler({
 const STORAGE_KEY = 'dream-journal-reminder';
 
 export const NotificationService = {
-  
+
   // Request Permissions
   requestPermissions: async () => {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
-    
+
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
-    
+
     if (finalStatus !== 'granted') {
-      Alert.alert("Permission Required", "Please enable notifications to receive reminders.");
+      Alert.alert(i18n.t('notification_perm_title'), i18n.t('notification_perm_body'));
       return false;
     }
     return true;
@@ -42,21 +43,21 @@ export const NotificationService = {
 
     const identifier = await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Dream Journal 🌙",
-        body: "Did you dream about anything last night? Record it now!",
+        title: i18n.t('notification_title'),
+        body: i18n.t('notification_body'),
         sound: true,
       },
       trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY, // <--- ADD THIS
         hour: hour,
         minute: minute,
-      },
+        repeats: true,
+      } as Notifications.CalendarTriggerInput, // This cast fixes the TypeScript error
     });
-    
+
     // Persist settings
     const settings = { enabled: true, time: date.toISOString() };
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    
+
     return identifier;
   },
 

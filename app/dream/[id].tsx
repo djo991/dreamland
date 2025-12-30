@@ -9,23 +9,32 @@ import {
   Modal,
   Alert,
   StatusBarStyle,
+  ActivityIndicator, 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next'; // <--- Import
+import { useTranslation } from 'react-i18next';
 
 import { useDreams, Dream } from '../../components/DreamContext';
 import { useTheme } from '../../components/ThemeContext'; 
+import DreamShareModal from '../../components/DreamShareModal';
+// Import DreamStyle type
+import { interpretDream, DreamStyle } from '../../utils/aiService'; 
 
 export default function DreamDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { dreams, deleteDream } = useDreams();
+  const { dreams, deleteDream, updateDream } = useDreams(); 
   const { colors } = useTheme(); 
-  const { t } = useTranslation(); // <--- Init
+  const { t } = useTranslation(); 
 
+  const [shareModalVisible, setShareModalVisible] = useState(false);
   const [dream, setDream] = useState<Dream | undefined>(undefined);
+
+  // AI State
+  const [isInterpreting, setIsInterpreting] = useState(false);
+  const [interpretationStyle, setInterpretationStyle] = useState<DreamStyle>('psychologist');
 
   useEffect(() => {
     if (id && dreams.length > 0) {
@@ -55,6 +64,27 @@ export default function DreamDetailScreen() {
       },
     ]);
   };
+
+  // --- AI Interpretation Handler ---
+  const handleInterpret = async () => {
+    if (!dream) return;
+    setIsInterpreting(true);
+    try {
+      // Call AI Service with the SELECTED STYLE
+      const result = await interpretDream(dream.title, dream.body, dream.tags, interpretationStyle);
+      
+      // Save result
+      const updatedDream = { ...dream, interpretation: result };
+      updateDream(updatedDream);
+      setDream(updatedDream); 
+      
+    } catch (e) {
+      Alert.alert("Error", "Failed to interpret dream. Please check your connection.");
+    } finally {
+      setIsInterpreting(false);
+    }
+  };
+  // --------------------------------------
 
   if (!dream) {
     return (
@@ -94,6 +124,15 @@ export default function DreamDetailScreen() {
         </TouchableOpacity>
 
         <View className="flex-row gap-2">
+          {/* SHARE BUTTON */}
+          <TouchableOpacity
+            onPress={() => setShareModalVisible(true)}
+            className="w-10 h-10 rounded-full items-center justify-center"
+            style={{ backgroundColor: colors.input }}
+          >
+            <MaterialIcons name="share" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+
           {/* Edit Button */}
           <TouchableOpacity
             onPress={() => router.push({ pathname: '/editor', params: { id: dream.id } })}
@@ -218,6 +257,88 @@ export default function DreamDetailScreen() {
             ))}
           </View>
 
+          {/* --- ANALYSIS SECTION --- */}
+          <View 
+            className="mt-6 pt-6 border-t"
+            style={{ borderColor: colors.border }}
+          >
+            <View className="flex-row items-center gap-2 mb-4">
+              <MaterialIcons name="psychology" size={20} color={colors.primary} />
+              <Text 
+                className="text-xl font-bold -mt-[1px]"
+                style={{ color: colors.text }}
+              >
+                Analysis
+              </Text>
+            </View>
+
+            {/* 1. Style Selector (Visible to allow changing persona) */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-4">
+              {(['psychologist', 'freud', 'mystic', 'bestie'] as DreamStyle[]).map((style) => (
+                <TouchableOpacity
+                  key={style}
+                  onPress={() => setInterpretationStyle(style)}
+                  className={`px-3 py-2 rounded-lg border`}
+                  style={{ 
+                    borderColor: interpretationStyle === style ? colors.primary : colors.border,
+                    backgroundColor: interpretationStyle === style ? colors.primary + '20' : colors.card 
+                  }}
+                >
+                  <Text style={{ 
+                    color: interpretationStyle === style ? colors.primary : colors.textSecondary,
+                    fontWeight: interpretationStyle === style ? 'bold' : 'normal',
+                    fontSize: 12,
+                    textTransform: 'capitalize'
+                  }}>
+                    {t(`style_${style}`) || style}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* 2. Analyze/Re-analyze Button */}
+            <TouchableOpacity 
+              onPress={handleInterpret}
+              disabled={isInterpreting}
+              className={`w-full py-3 rounded-xl border border-dashed flex-row items-center justify-center gap-2 mb-4`}
+              style={{ 
+                borderColor: colors.primary, 
+                backgroundColor: dream.interpretation ? 'transparent' : colors.primary + '05' 
+              }}
+            >
+               {isInterpreting ? (
+                 <ActivityIndicator size="small" color={colors.primary} />
+               ) : (
+                 <>
+                   <MaterialCommunityIcons name="brain" size={20} color={colors.primary} />
+                   <Text style={{ color: colors.primary, fontWeight: '600' }}>
+                     {dream.interpretation ? "Re-analyze Dream" : "Analyze Dream"}
+                   </Text>
+                 </>
+               )}
+            </TouchableOpacity>
+
+            {/* 3. Result */}
+            {dream.interpretation ? (
+               <View 
+                 className="p-4 rounded-xl border"
+                 style={{ 
+                   backgroundColor: colors.card,
+                   borderColor: colors.border 
+                 }}
+               >
+                 <Text style={{ color: colors.text, lineHeight: 24 }} className="italic">
+                   {dream.interpretation}
+                 </Text>
+               </View>
+            ) : (
+              <Text style={{ color: colors.textSecondary }} className="italic text-sm text-center">
+                 Select a persona and tap analyze to reveal the hidden meaning.
+              </Text>
+            )}
+          </View>
+          {/* ----------------------------- */}
+
           {/* Gallery Section */}
           <View 
             className="mt-6 pt-6 border-t"
@@ -285,7 +406,14 @@ export default function DreamDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal */}
+      {/* RENDER THE SHARE MODAL */}
+      <DreamShareModal 
+        visible={shareModalVisible} 
+        onClose={() => setShareModalVisible(false)} 
+        dream={dream || null} 
+      />
+
+      {/* Modal for Viewing Images */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View className="flex-1 bg-black/95 relative justify-center items-center">
           <TouchableOpacity
