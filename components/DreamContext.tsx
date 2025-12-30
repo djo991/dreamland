@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initDatabase, getDreams, insertDream, removeDream, updateDreamInDb, clearDatabase, DreamData } from '../utils/database';
+import i18n from '../i18n';
 
 // 1. Types
 export interface Dream {
@@ -82,12 +83,25 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Helper for safe parsing
+  const safeParse = (jsonString: string, fallback: any) => {
+    try {
+      if (!jsonString) return fallback;
+      return JSON.parse(jsonString);
+    } catch (e) {
+      console.warn("JSON Parse Error:", e);
+      return fallback;
+    }
+  };
+
+
+
   const loadDreams = () => {
     try {
       const rawDreams = getDreams();
       // Explicitly map DB types (numbers/strings) to UI types (booleans/dates)
       const formattedDreams: Dream[] = rawDreams.map((row: DreamData) => {
-        const parsedImages = JSON.parse(row.images || '[]');
+        const parsedImages = safeParse(row.images, []);
         return {
           id: row.id!.toString(), // ID is guaranteed from DB fetch
           title: row.title,
@@ -96,7 +110,7 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
           mood: row.mood,
           isLucid: row.isLucid === 1,
           isNightmare: row.isNightmare === 1,
-          tags: JSON.parse(row.tags || '[]'),
+          tags: safeParse(row.tags, []),
           images: parsedImages,
           hasImages: parsedImages.length > 0,
           imageCount: parsedImages.length,
@@ -108,19 +122,27 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
       setError(null); // Clear error on success
     } catch (e) {
       console.error("Failed to load dreams:", e);
-      setError("Failed to load your dreams.");
+      setError(i18n.t('error_load_dreams')); // I18n fix
     }
   };
 
   // Import Data Function
   const importData = async (jsonData: string): Promise<boolean> => {
     try {
-      const parsed = JSON.parse(jsonData);
-      if (!Array.isArray(parsed)) throw new Error("Invalid Format");
+      // 1. JSON Parse Safety
+      let parsed;
+      try {
+        parsed = JSON.parse(jsonData);
+      } catch (e) {
+        throw new Error(i18n.t('error_import_failed'));
+      }
+
+      if (!Array.isArray(parsed)) throw new Error(i18n.t('error_import_failed'));
 
       // Loop through and insert each dream
       parsed.forEach((d: any) => {
-        if (!d.title) return;
+        // 2. Schema Validation
+        if (!d.title || typeof d.title !== 'string') return; // Skip invalid entries
 
         insertDream({
           title: d.title,
@@ -159,7 +181,7 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
       loadDreams();
     } catch (e) {
       console.error("Failed to add dream:", e);
-      setError("Failed to save dream.");
+      setError(i18n.t('error_save_dream'));
     }
   };
 
@@ -180,7 +202,7 @@ export function DreamProvider({ children }: { children: React.ReactNode }) {
       loadDreams();
     } catch (e) {
       console.error("Failed to update dream:", e);
-      setError("Failed to update dream.");
+      setError(i18n.t('error_save_dream'));
     }
   };
 

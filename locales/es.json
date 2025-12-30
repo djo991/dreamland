@@ -84,5 +84,10 @@
   "style_freud": "Freud",
   "style_mystic": "El Místico",
   "style_bestie": "Mejor Amiga (Sassy)",
-  "btn_interpret": "Analyze Dream"
+  "btn_interpret": "Analyze Dream",
+  "error_db_init": "Error al iniciar base de datos.",
+  "error_load_dreams": "Error al cargar sueños.",
+  "error_save_dream": "Error al guardar sueño.",
+  "error_import_failed": "Importación fallida. Formato inválido.",
+  "btn_add_image_limit": "Límite alcanzado"
 }

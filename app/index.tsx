@@ -336,6 +336,9 @@ export default function DreamListScreen() {
         <FlatList
           data={filteredDreams}
           keyExtractor={(item) => item.id}
+          getItemLayout={(data, index) => (
+            { length: 150, offset: 150 * index, index }
+          )}
           renderItem={renderDreamItem}
           contentContainerStyle={{ paddingBottom: 100 }}
           ListEmptyComponent={

@@ -115,5 +115,10 @@
   "notification_perm_body": "Please enable notifications to receive reminders.",
   "notification_title": "Dream Journal 🌙",
   "notification_body": "Did you dream about anything last night? Record it now!",
-  "alert_analyze_failed": "Could not analyze dream. Please check connection."
+  "alert_analyze_failed": "Could not analyze dream. Please check connection.",
+  "error_db_init": "Failed to initialize database.",
+  "error_load_dreams": "Failed to load dreams.",
+  "error_save_dream": "Failed to save dream.",
+  "error_import_failed": "Import failed. Invalid file format.",
+  "btn_add_image_limit": "Limit Reached"
 }

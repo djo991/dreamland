@@ -24,7 +24,7 @@ export const initDatabase = () => {
   try {
     // A. Check current version
     const versionResult = db.getFirstSync<{ user_version: number }>('PRAGMA user_version');
-    const currentVersion = versionResult?.user_version || 0;
+    let currentVersion = versionResult?.user_version || 0;
 
     if (currentVersion >= CURRENT_DB_VERSION) {
       return; // Already up to date
@@ -46,20 +46,20 @@ export const initDatabase = () => {
           interpretation TEXT
         );
       `);
-      db.execSync(`PRAGMA user_version = ${CURRENT_DB_VERSION}`);
-    } else {
-      // Handle Migrations here if version > 0 but < CURRENT
-      // For now, we assume migration 0->1 is adding 'interpretation'
-      // This block is for future proofing.
-
-      // Example Migration Logic:
-      // if (currentVersion < 2) {
-      //    db.execSync('ALTER TABLE dreams ADD COLUMN ...');
-      // }
-
-      // Ensure we catch up the version at the end
-      db.execSync(`PRAGMA user_version = ${CURRENT_DB_VERSION}`);
+      currentVersion = 1;
+      db.execSync(`PRAGMA user_version = ${currentVersion}`);
     }
+
+    // Example Future Migration (e.g., version 2)
+    // if (currentVersion < 2) {
+    //    db.execSync('ALTER TABLE dreams ADD COLUMN ...');
+    //    currentVersion = 2;
+    //    db.execSync(`PRAGMA user_version = ${currentVersion}`);
+    // }
+
+    // Final sanity check
+    db.execSync(`PRAGMA user_version = ${CURRENT_DB_VERSION}`);
+
   } catch (e) {
     console.error("Database Initialization Error:", e);
     throw e; // Re-throw so Context can catch it

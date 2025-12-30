@@ -84,5 +84,10 @@
   "style_freud": "Frojd",
   "style_mystic": "Mistik",
   "style_bestie": "Najbolja drugarica",
-  "btn_interpret": "Analiziraj san"
+  "btn_interpret": "Analiziraj san",
+  "error_db_init": "Greška pri inicijalizaciji baze.",
+  "error_load_dreams": "Greška pri učitavanju snova.",
+  "error_save_dream": "Greška pri čuvanju sna.",
+  "error_import_failed": "Uvoz neuspešan. Neispravan format.",
+  "btn_add_image_limit": "Limit dostignut"
 }

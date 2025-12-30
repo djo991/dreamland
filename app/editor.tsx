@@ -370,11 +370,19 @@ export default function EditorScreen() {
 
               {/* Upload Button */}
               <TouchableOpacity
-                onPress={pickImage}
+                onPress={images.length < 10 ? pickImage : undefined}
                 className="w-24 h-24 rounded-lg border-2 border-dashed items-center justify-center"
-                style={{ borderColor: colors.border, backgroundColor: colors.input + '40' }}
+                style={{
+                  borderColor: colors.border,
+                  backgroundColor: colors.input + '40',
+                  opacity: images.length >= 10 ? 0.5 : 1
+                }}
               >
-                <MaterialIcons name="add-photo-alternate" size={24} color={colors.textSecondary} />
+                {images.length >= 10 ? (
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, textAlign: 'center' }}>{t('btn_add_image_limit')}</Text>
+                ) : (
+                  <MaterialIcons name="add-photo-alternate" size={24} color={colors.textSecondary} />
+                )}
               </TouchableOpacity>
 
               {/* AI Generator Button */}
