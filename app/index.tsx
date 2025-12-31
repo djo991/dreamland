@@ -243,8 +243,8 @@ export default function DreamListScreen() {
               </View>
 
               {/* Age & Gender */}
-              <View className="flex-row gap-4">
-                <View className="flex-1">
+              <View className="flex-row w-full pr-4">
+                <View className="flex-1 pr-4">
                   <Text style={{ color: colors.textSecondary }} className="text-xs mb-1 ml-1">{t('label_age')}</Text>
                   <TextInput
                     className="px-4 py-3 rounded-xl border"
@@ -256,7 +256,7 @@ export default function DreamListScreen() {
                     onChangeText={setNewAge}
                   />
                 </View>
-                <View className="flex-1">
+                <View className="flex-1 pl-4">
                   <Text style={{ color: colors.textSecondary }} className="text-xs mb-1 ml-1">{t('label_gender')}</Text>
                   <TouchableOpacity
                     onPress={() => setGenderPickerVisible(true)}
@@ -272,7 +272,7 @@ export default function DreamListScreen() {
               </View>
 
               {/* Wake Up Time */}
-              <View>
+              <View className="flex-none pb-4">
                 <Text style={{ color: colors.textSecondary }} className="text-xs mb-1 ml-1">{t('label_waketime')}</Text>
                 <TouchableOpacity
                   onPress={() => setShowTimePicker(true)}
@@ -298,7 +298,7 @@ export default function DreamListScreen() {
 
               <TouchableOpacity
                 onPress={handleFinishOnboarding}
-                className="w-full py-4 rounded-xl mt-4 items-center justify-center shadow-lg"
+                className="flex-none w-full py-4 rounded-xl mt-4 items-center justify-center shadow-lg"
                 style={{ backgroundColor: colors.primary, shadowColor: colors.primary, shadowOpacity: 0.3 }}
               >
                 <Text className="text-white font-bold text-lg">{t('btn_start')}</Text>
