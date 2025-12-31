@@ -27,6 +27,7 @@ import { useDreams } from '../components/DreamContext';
 import { useTheme } from '../components/ThemeContext';
 import { ThemeMode } from '../constants/theme';
 import { NotificationService } from '../services/notificationService';
+import { createBackupZip, parseBackupZip } from '../services/backupService';
 
 const GENDER_KEYS: Record<string, string> = {
   'Male': 'gender_male',
@@ -137,39 +138,92 @@ export default function SettingsScreen() {
     </TouchableOpacity>
   );
 
+
+
+  // ... inside component ...
+
   const handleExport = async () => {
     try {
       if (dreams.length === 0) {
         Alert.alert(t('alert_no_data'), t('alert_no_dreams_export'));
         return;
       }
-      const fileName = `DreamJournal_Backup_${new Date().toISOString().split('T')[0]}.json`;
-      const fileUri = FileSystem.documentDirectory + fileName;
-      const dataStr = JSON.stringify(dreams, null, 2);
-      await FileSystem.writeAsStringAsync(fileUri, dataStr, { encoding: FileSystem.EncodingType.UTF8 });
+      setIsLoading(true);
+
+      // Create ZIP
+      const zipUri = await createBackupZip(dreams);
+
+      // Share
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, { mimeType: 'application/json', dialogTitle: 'Save your Backup' });
+        await Sharing.shareAsync(zipUri, { mimeType: 'application/zip', dialogTitle: 'Save your Backup' });
       } else {
         Alert.alert(t('alert_error'), t('alert_share_not_available'));
       }
     } catch (error) {
       console.error(error);
       Alert.alert(t('alert_error'), t('alert_save_failed'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleImport = async () => {
     try {
       setIsLoading(true);
-      const result = await DocumentPicker.getDocumentAsync({ type: 'application/json', copyToCacheDirectory: true });
+      // Allow selecting ZIP or JSON (legacy support)
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/zip', 'application/json'],
+        copyToCacheDirectory: true
+      });
+
       if (result.canceled) { setIsLoading(false); return; }
+
       const fileUri = result.assets[0].uri;
-      const fileContent = await FileSystem.readAsStringAsync(fileUri);
-      const success = await importData(fileContent);
-      if (success) { Alert.alert(t('alert_success'), t('alert_imported')); }
-      else { Alert.alert(t('alert_error'), t('alert_invalid_backup')); }
-    } catch (e) { Alert.alert(t('alert_error'), t('alert_read_failed')); }
-    finally { setIsLoading(false); }
+      const fileName = result.assets[0].name;
+
+      if (fileName.endsWith('.json')) {
+        // LEGACY JSON IMPORT
+        const fileContent = await FileSystem.readAsStringAsync(fileUri);
+        const success = await importData(fileContent); // importData expects JSON string
+        if (success) Alert.alert(t('alert_success'), t('alert_imported'));
+        else Alert.alert(t('alert_error'), t('alert_invalid_backup'));
+
+      } else {
+        // ZIP IMPORT
+        const { dreams: importedDreams, images: imageMap } = await parseBackupZip(fileUri);
+
+        // Remap Image Paths
+        importedDreams.forEach(d => {
+          if (d.images && d.images.length > 0) {
+            d.images = d.images.map(oldPath => {
+              // Extract filename from old path
+              const fName = oldPath.split('/').pop();
+              if (fName && imageMap[fName]) {
+                return imageMap[fName];
+              }
+              return oldPath; // Fallback (likely won't work if path defines device specifics)
+            });
+            // Update thumbnail/count
+            d.thumbnail = d.images[0];
+            d.hasImages = true;
+          }
+        });
+
+        // Pass to Context (Need to update context to accept object, not just string)
+        // For now, we stringify it back so we reuse `importData` logic which parses it. 
+        // Ideally refactor `importData` later, but this works safely.
+        const success = await importData(JSON.stringify(importedDreams));
+
+        if (success) Alert.alert(t('alert_success'), t('alert_imported'));
+        else Alert.alert(t('alert_error'), t('alert_invalid_backup'));
+      }
+
+    } catch (e) {
+      console.error(e);
+      Alert.alert(t('alert_error'), t('alert_read_failed'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClear = () => {
